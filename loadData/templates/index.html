@@ -5,6 +5,7 @@
     <h2 class="text-center">Witaj w Weka 2.0</h2>
     <p class="text-center">Wprowadź swój dataset, na którym będziesz chciał przetestować modele ML</p>
     <form class="text-center mt-4" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
       <input type="file" name="file" accept=".csv" class="form-control mb-3" required>
       <button type="submit" class="btn btn-primary">Dodaj CSV</button>
     </form>
@@ -23,14 +24,16 @@
         <div class="col-md-4 mb-4">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="card-title" ><strong>Nazwa:</strong> {{ dataset.name }}</h5>
+              <h5 class="card-title"><strong>Nazwa:</strong> {{ dataset.name }}</h5>
               <p class="card-text">ID: {{ dataset.id }}</p>
+              <p class="card-text"><strong>Opis:</strong> {{ dataset }}</p>
             </div>
             <div class="card-footer d-flex justify-content-between">
               <form method="get" action="/{{ dataset.id }}">
                 <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
               </form>
               <form method="post" action="/delete/{{ dataset.id }}">
+                {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
               </form>
             </div>
