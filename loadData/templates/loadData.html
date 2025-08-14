@@ -1,5 +1,8 @@
-{% extends "base.html" %} {% block title %} Weka 2.0 - Strona Główna {% endblock %}
+{% extends "base.html" %} 
+{% block title %} Weka 2.0 - Strona Główna {% endblock %}
 {% block content %}
+
+{% if user.is_authenticated %}
 
   <div class="container mt-5">
     <h2 class="text-center">Witaj w Weka 2.0</h2>
@@ -21,6 +24,7 @@
   <div class="row">
     {% if datasets %}
       {% for dataset in datasets %}
+          
         <div class="col-md-4 mb-4">
           <div class="card h-100">
             <div class="card-body">
@@ -53,5 +57,13 @@
   </div>
   </div>
 
+{% else %}
+  <div class="container mt-5">
+    <div class="alert alert-warning text-center">
+      Musisz być zalogowany, aby zobaczyć tę stronę.
+        <p>Zaloguj się! - <a href="/login/">Tutaj</a></p>
+    </div>
+  </div>
+{% endif %}
 
 {% endblock %}

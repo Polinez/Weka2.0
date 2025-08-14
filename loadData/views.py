@@ -5,10 +5,12 @@ import io
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseRedirect
 from django.db import IntegrityError  # Correct import for catching integrity errors
+from django.contrib.auth.decorators import login_required
 
 # Views for loading and processing datasets
 
 
+@login_required
 def load_data(request):
     """
     View function to load datasets and render the index page.
@@ -30,15 +32,17 @@ def load_data(request):
                 Dataset.objects.create(
                     name=uploaded_file.name,
                     data=csv_text,
+                    user=request.user,  # Associate dataset with the logged-in user
                 )
-                return redirect('load_data')
+                return redirect('loadData:load_data')
             except IntegrityError:
                 error = f"Zestaw danych o tej nazwie {uploaded_file.name} już istnieje."
             except Exception as e:
                 error = f"Błąd podczas przetwarzania pliku: {str(e)}"
 
     try:
-        datasets = Dataset.objects.all().order_by('-id')
+        # Filter datasets by current user
+        datasets = Dataset.objects.filter(user=request.user).order_by('-id')
     except Exception as e:
         datasets = []
         error = f"Błąd podczas pobierania danych: {str(e)}"
