@@ -56,7 +56,7 @@ def dataset_to_dataframe(dataset):
     """
     return pd.read_csv(io.StringIO(dataset.data))
 
-
+@login_required
 def delete_dataset(request, dataset_id):
     """
     View for deleting a dataset by its ID.
@@ -67,4 +67,4 @@ def delete_dataset(request, dataset_id):
             dataset.delete()
         except Dataset.DoesNotExist:
             pass  # Optionally handle not found
-    return redirect('load_data')
+    return redirect('loadData:load_data')

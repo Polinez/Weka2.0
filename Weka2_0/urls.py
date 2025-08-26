@@ -21,7 +21,7 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', lambda request: redirect('login')), # /
+    path('', lambda request: redirect('loadData:load_data')), # if logged in, go to load_data if not, go to login
     path('signup/', register_views.signup, name='signup'),
     path('', include('django.contrib.auth.urls')), # /login/, /logout/, /password_change/, etc.
     path("upload/",include("loadData.urls")),

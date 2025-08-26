@@ -36,7 +36,7 @@
               <form method="get" action="/{{ dataset.id }}">
                 <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
               </form>
-              <form method="post" action="/delete/{{ dataset.id }}">
+              <form method="post" action="{% url 'loadData:delete_dataset' dataset.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
               </form>
