@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Weka 2.0 - About
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h1>O projekcie Weka 2.0</h1>
+    <p>
+      Weka 2.0 to aplikacja webowa umożliwiająca zarządzanie i analizę zbiorów danych.
+      Projekt powstał w celu ułatwienia pracy z danymi oraz integracji z narzędziami uczenia maszynowego.
+    </p>
+    <h2>Funkcje</h2>
+    <ul>
+      <li>Rejestracja i logowanie użytkowników</li>
+      <li>Dodawanie, przeglądanie i usuwanie zbiorów danych</li>
+      <li>Podstawowa analiza danych</li>
+    </ul>
+    <h2>Autor</h2>
+    <p>
+      Sebastian &copy; {% now "Y" %}
+    </p>
+  </div>
+{% endblock %}

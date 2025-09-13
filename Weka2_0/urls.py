@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from register import views as register_views
 from django.shortcuts import redirect
+from loadData.views import contact, about
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,4 +26,6 @@ urlpatterns = [
     path('signup/', register_views.signup, name='signup'),
     path('', include('django.contrib.auth.urls')), # /login/, /logout/, /password_change/, etc.
     path("upload/",include("loadData.urls")),
+    path('contact/', contact, name='contact'),
+    path('about/', about, name='about')
 ]

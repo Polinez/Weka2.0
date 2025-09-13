@@ -68,3 +68,11 @@ def delete_dataset(request, dataset_id):
         except Dataset.DoesNotExist:
             pass  # Optionally handle not found
     return redirect('loadData:load_data')
+
+# Simple view to render a contact page
+def contact(request):
+    return render(request, "contact.html")
+
+# Simple view to render an about page
+def about(request):
+    return render(request, "about.html")
