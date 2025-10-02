@@ -27,5 +27,6 @@ urlpatterns = [
     path('', include('django.contrib.auth.urls')), # /login/, /logout/, /password_change/, etc.
     path("upload/",include("loadData.urls")),
     path('contact/', contact, name='contact'),
-    path('about/', about, name='about')
+    path('about/', about, name='about'),
+    path('mlstudio/', include('mlstudio.urls')),
 ]

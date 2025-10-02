@@ -32,8 +32,10 @@
               <p class="card-text">ID: {{ dataset.id }}</p>
               <p class="card-text"><strong>Opis:</strong> {{ dataset }}</p>
             </div>
+
             <div class="card-footer d-flex justify-content-between">
-              <form method="get" action="/{{ dataset.id }}">
+              <form method="post" action="{% url 'mlstudio:studio' dataset.id %}">
+                {% csrf_token %}
                 <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
               </form>
               <form method="post" action="{% url 'loadData:delete_dataset' dataset.id %}">
@@ -41,6 +43,7 @@
                 <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
               </form>
             </div>
+
           </div>
         </div>
       {% endfor %}
