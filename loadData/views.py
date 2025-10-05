@@ -2,10 +2,9 @@ from django.shortcuts import render, redirect
 from .models import Dataset
 import pandas as pd
 import io
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseRedirect
 from django.db import IntegrityError  # Correct import for catching integrity errors
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 
 # Views for loading and processing datasets
 
@@ -76,3 +75,28 @@ def contact(request):
 # Simple view to render an about page
 def about(request):
     return render(request, "about.html")
+
+
+# send report mail
+def contact_view(request):
+    context = {}
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = request.POST.get('message')
+
+        if name and email and message:
+            try:
+                send_mail(
+                    f'Błąd na stronie od {name}',
+                    message,
+                    email,
+                    ['sebastian.wandzel@uekat.edu.pl'],
+                )
+                context['success'] = True
+            except Exception as e:
+                context['error'] = 'Nie udało się wysłać wiadomości. Spróbuj później.'
+        else:
+            context['error'] = 'Wypełnij wszystkie pola.'
+
+    return render(request, 'contact.html', context)
