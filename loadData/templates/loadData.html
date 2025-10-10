@@ -34,10 +34,10 @@
             </div>
 
             <div class="card-footer d-flex justify-content-between">
-              <form method="post" action="{% url 'mlstudio:studio' dataset.id %}">
+                <form method="post" action="{% url 'mlstudio:select_dataset' dataset.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
-              </form>
+                </form>
               <form method="post" action="{% url 'loadData:delete_dataset' dataset.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
