@@ -26,7 +26,7 @@ def select_dataset(request, dataset_id):
 def studio(request):
     dataset = load_data_from_sesion(request)
 
-    df = pd.read_csv(io.StringIO(dataset.data))  # konwersja do DataFrame
+    df = pd.read_csv(io.StringIO(dataset.data))  # convert to DataFrame
 
     preview = df.head().to_html()
     return render(request, "explore.html", {"dataset": dataset, "preview": preview})
@@ -35,7 +35,11 @@ def studio(request):
 def preprocess(request):
     dataset = load_data_from_sesion(request)
 
-    return render(request, "preprocess.html", {"dataset": dataset})
+    df = pd.read_csv(io.StringIO(dataset.data))
+
+    data = df.head().values.tolist()
+    columns = df.columns.tolist()
+    return render(request, "preprocess.html", {"dataset": dataset, "data": data, "columns": columns})
 
 def models(request):
     dataset = load_data_from_sesion(request)
