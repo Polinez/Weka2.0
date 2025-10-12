@@ -29,10 +29,19 @@ def studio(request):
 
     df = pd.read_csv(io.StringIO(dataset.data))  # convert to DataFrame
 
-    columnames = df.columns.to_list()
+    data = df.head().values.tolist()
+    columns = df.columns.tolist()
 
-    preview = df.head().to_html()
-    return render(request, "explore.html", {"dataset": dataset, "preview": preview})
+    stats_df = df.describe()
+    statistics = stats_df.reset_index().values.tolist()
+    stat_columns = ["Statystyka"] + stats_df.columns.tolist()
+
+    return render(request, "explore.html", {
+        "dataset": dataset,
+        "data": data,
+        "columns": columns,
+        "statistics": statistics,
+        "stat_columns": stat_columns})
 
 
 def preprocess(request):
@@ -42,6 +51,7 @@ def preprocess(request):
 
     data = df.head().values.tolist()
     columns = df.columns.tolist()
+
     return render(request, "preprocess.html", {
         "dataset": dataset,
         "data": data,
