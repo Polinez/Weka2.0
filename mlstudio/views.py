@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from loadData.models import Dataset
 import pandas as pd
 import io
+import sklearn
 
 def load_data_from_sesion(request):
     dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
@@ -28,6 +29,8 @@ def studio(request):
 
     df = pd.read_csv(io.StringIO(dataset.data))  # convert to DataFrame
 
+    columnames = df.columns.to_list()
+
     preview = df.head().to_html()
     return render(request, "explore.html", {"dataset": dataset, "preview": preview})
 
@@ -39,7 +42,10 @@ def preprocess(request):
 
     data = df.head().values.tolist()
     columns = df.columns.tolist()
-    return render(request, "preprocess.html", {"dataset": dataset, "data": data, "columns": columns})
+    return render(request, "preprocess.html", {
+        "dataset": dataset,
+        "data": data,
+        "columns": columns})
 
 def models(request):
     dataset = load_data_from_sesion(request)

@@ -9,6 +9,79 @@
     {% include "_submenu.html" %}
 
     <h2>Eksploracja datasetu: {{ dataset.name }}</h2>
-    <div>{{ preview|safe }}</div>
+
+    <!-- row 1: windows 1 and 2  -->
+    <div class="row">
+
+        <!-- Window 1 -->
+        <div class="col-md-6 mb-3 d-flex">
+        <div class="card shadow-sm flex-fill">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Wybór kolumny decyzyjnej</h5>
+
+                <div class="bg-light">
+                    <form id="classColumnForm">
+                        {% for col in columns %}
+                            <div class="form-check text-start">
+                                <input class="form-check-input" type="radio" name="class_column" value="{{ col }}" id="col_{{ loop.index }}">
+                                <label class="form-check-label" for="col_{{ loop.index }}">{{ col }}</label>
+                            </div>
+                        {% endfor %}
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+        <!-- Window 2 -->
+        <div class="col-md-6 mb-3 d-flex">
+        <div class="card shadow-sm flex-fill">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Statystyki</h5>
+
+                <div class="bg-light">
+                    hej
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+    <!-- Window 3 -->
+    <div class="col-12 mb-3 d-flex">
+        <div class="card shadow-sm flex-fill">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Rozkład cechy</h5>
+
+                <div class="bg-light">
+                    hej
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Window 4 -->
+    <div class="col-12 mb-3 d-flex">
+        <div class="card shadow-sm flex-fill">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Podgląd danych</h5>
+
+                <div class="bg-light">
+                    {{ preview|safe }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
 
 {% endblock %}
