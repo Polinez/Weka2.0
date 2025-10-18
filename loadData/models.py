@@ -6,6 +6,8 @@ class Dataset(models.Model):
     name = models.CharField(max_length=255, db_index=True, null=False)
     data = models.TextField(null=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    target_column = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     # one user can not have two datasets with the same name
     class Meta:

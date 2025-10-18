@@ -25,11 +25,11 @@
     {% if datasets %}
       {% for dataset in datasets %}
           
-        <div class="col-md-4 mb-4">
+        <div class="col-md-4 mb-4 ">
           <div class="card h-100">
             <div class="card-body">
               <h5 class="card-title"><strong>Nazwa:</strong> {{ dataset.name }}</h5>
-              <p class="card-text">ID: {{ dataset.id }}</p>
+              <p class="card-text">Kolumna decyzyjna: {{ dataset.target_column }}</p>
               <p class="card-text"><strong>Opis:</strong> {{ dataset }}</p>
             </div>
 
@@ -38,6 +38,12 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
                 </form>
+
+                <a href="{% url 'loadData:set_target' dataset.id %}" class="btn btn-white btn-sm btn-outline-secondary">
+                    Ustaw kolumnę decyzyjną
+                </a>
+
+
               <form method="post" action="{% url 'loadData:delete_dataset' dataset.id %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm">Usuń</button>

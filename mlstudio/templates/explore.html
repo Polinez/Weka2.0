@@ -13,6 +13,16 @@
         max-height: 400px;
         overflow-y: auto;
     }
+
+    /* 1 coll sticky by tables */
+    .table thead th:first-child,
+    .table tbody td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 2; /* on top */
+        box-shadow: 2px 0 2px rgba(0,0,0,0.1); /* shadow for clarity */
+    }
     </style>
 
     <h2>Eksploracja datasetu: {{ dataset.name }}</h2>
@@ -24,28 +34,39 @@
         <div class="col-md-6 mb-3 d-flex">
             <div class="card shadow-sm flex-fill">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Wybór kolumny decyzyjnej</h5>
+                    <h5 class="card-title mb-3">Wybór kolumny do eksploracji</h5>
 
-                    <div class="bg-light p-3 d-flex flex-column scrollable-content" >
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nr.</th>
-                                    <th>radiobutton</th>
-                                    <th>Nazwa</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for col in columns %}
+                    <form method="post" action="{% url 'mlstudio:studio' %}">
+                        {% csrf_token %}
+                        <div class="bg-light p-3 d-flex flex-column scrollable-content">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td>{{ forloop.counter }}</td>
-                                        <td><input type="radio" name="feature" value="{{ col }}"></td>
-                                        <td>{{ col }}</td>
+                                        <th>Nr.</th>
+                                        <th>radiobutton</th>
+                                        <th>Nazwa</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {% for col in columns %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <input
+                                                    type="radio"
+                                                    name="selected_column"
+                                                    value="{{ col }}"
+                                                    {% if col == selected_column %}checked{% endif %}
+                                                    onchange="this.form.submit()">
+                                            </td>
+                                            <td>{{ col }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+
 
                 </div>
             </div>
@@ -57,9 +78,14 @@
                 <div class="card-body">
                     <h5 class="card-title mb-3">Rozkład cechy</h5>
 
-                    <div class="bg-light">
-                        hej #SEE THIS TUTORIAL https://www.youtube.com/watch?v=jrT6NiM46jk or BYTES.IO
+                    <div class="bg-light text-center p-2 scrollable-content" >
+                        {% if graph %}
+                            <img src="data:image/png;base64,{{ graph }}" alt="Wykres rozkładu cech" class="img-fluid rounded shadow-sm"/>
+                        {% else %}
+                            <p>Brak wykresu do wyświetlenia.</p>
+                        {% endif %}
                     </div>
+
 
                 </div>
             </div>

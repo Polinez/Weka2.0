@@ -6,6 +6,9 @@ from django.db import IntegrityError  # Correct import for catching integrity er
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 # Views for loading and processing datasets
 
 
@@ -47,6 +50,27 @@ def load_data(request):
         error = f"Błąd podczas pobierania danych: {str(e)}"
 
     return render(request, 'loadData.html', {"error": error, "datasets": datasets})
+
+@login_required
+def set_target(request, dataset_id):
+    """
+    Render of site to set target column for a dataset.
+    """
+    dataset = Dataset.objects.get(id=dataset_id, user=request.user)
+    df = dataset_to_dataframe(dataset)
+    columns = list(df.columns)
+
+    if request.method == "POST":
+        target_col = request.POST.get("target_column")
+        if target_col in columns:
+            dataset.target_column = target_col
+            dataset.save()
+            return redirect("loadData:load_data")
+        else:
+            error = "Nieprawidłowa kolumna"
+            return render(request, "decisionColumn.html", {"dataset": dataset, "columns": columns, "error": error})
+
+    return render(request, "decisionColumn.html", {"dataset": dataset, "columns": columns})
 
 
 def dataset_to_dataframe(dataset):

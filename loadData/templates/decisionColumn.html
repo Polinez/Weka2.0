@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %} Weka 2.0 - Wybór kolumny decyzyjnej {% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center">Wybierz kolumnę decyzyjną dla: {{ dataset.name }}</h2>
+
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="mt-4">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="target_column" class="form-label">Kolumna decyzyjna</label>
+      <select name="target_column" id="target_column" class="form-select" required>
+        {% for col in columns %}
+          <option value="{{ col }}" {% if col == dataset.target_column %}selected{% endif %}>{{ col }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success">Zapisz</button>
+    <a href="{% url 'loadData:load_data' %}" class="btn btn-secondary">Anuluj</a>
+  </form>
+</div>
+{% endblock %}
