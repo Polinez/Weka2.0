@@ -5,11 +5,32 @@ import io
 from django.db import IntegrityError  # Correct import for catching integrity errors
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+import mimetypes
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
-# Views for loading and processing datasets
+def validate_csv_file(uploaded_file):
+    """
+    Checks if the uploaded file is a valid CSV.
+    Returns a tuple: (df, error), where df is the loaded DataFrame or None,
+    and error is an error message string or None.
+    """
+    #  Check file extension
+    if not uploaded_file.name.lower().endswith('.csv'):
+        return None, "File must have a .csv extension."
+
+    # Check MIME type
+    mime_type, _ = mimetypes.guess_type(uploaded_file.name)
+    if mime_type not in ['text/csv', 'application/vnd.ms-excel', 'text/plain', None]:
+        return None, "Invalid file type. Only CSV files are allowed."
+
+    # Try reading the file content as CSV
+    try:
+        file_data = uploaded_file.read().decode('utf-8')
+        df = pd.read_csv(io.StringIO(file_data))
+    except Exception:
+        return None, "The file is not a valid CSV."
+
+    return df, None
 
 
 @login_required
@@ -18,23 +39,21 @@ def load_data(request):
     View function to load datasets and render the index page.
     """
     error = None
+
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
 
-        # Check file extension before processing
-        if not uploaded_file.name.endswith('.csv'):
-            error = "Proszę przesłać plik CSV."
-        else:
+        # Validate uploaded CSV file
+        df, error = validate_csv_file(uploaded_file)
+
+        if not error:
             try:
-                # Read file content as text and load into pandas DataFrame
-                file_data = uploaded_file.read().decode('utf8')
-                df = pd.read_csv(io.StringIO(file_data))
-                # Save DataFrame as CSV text to the database
+                # Convert DataFrame back to CSV text for database storage
                 csv_text = df.to_csv(index=False)
                 Dataset.objects.create(
                     name=uploaded_file.name,
                     data=csv_text,
-                    user=request.user,  # Associate dataset with the logged-in user
+                    user=request.user,
                 )
                 return redirect('loadData:load_data')
             except IntegrityError:

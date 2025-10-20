@@ -4,17 +4,25 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from loadData.models import Dataset
+from django.contrib import messages
 import pandas as pd
 import io
-import sklearn
+
 
 def load_data_from_sesion(request):
     dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
 
     if not dataset_id:
-        return render(request, "loadData:loadData.html", {"error": "No dataset selected."})
+        messages.error(request, "Nie wybrano datasetu. Wybierz dataset lub załaduj nowy.")
+        return redirect("loadData:loadData")
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+
+    # Jeśli brak ustawionej kolumny docelowej -> przekieruj do ustawienia
+    if not dataset.target_column:
+        messages.error(request, "Brak ustawionej kolumny docelowej dla wybranego datasetu. Ustaw ją najpierw.")
+        return redirect("loadData:set_target", dataset.id)
+
     return dataset
 
 
@@ -22,12 +30,21 @@ def load_data_from_sesion(request):
 @require_POST
 def select_dataset(request, dataset_id):
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+
+    # Jeśli dataset nie ma ustawionego targetu - poinformuj i przekieruj do ustawienia
+    if not dataset.target_column:
+        messages.error(request, "Nie można wybrać datasetu bez ustawionej kolumny docelowej. Ustaw ją najpierw.")
+        return redirect("loadData:set_target", dataset.id)
+
     request.session['dataset_id'] = dataset.id  # Store dataset_id in session
     return redirect("mlstudio:studio")
 
 @login_required()
 def studio(request):
     dataset = load_data_from_sesion(request)
+    # jeśli funkcja zwróciła HttpResponse (np. redirect z komunikatem), przekaż ją dalej
+    if not isinstance(dataset, Dataset):
+        return dataset
 
     df = pd.read_csv(io.StringIO(dataset.data))  # convert to DataFrame
     data = df.head().values.tolist()
@@ -64,6 +81,8 @@ def studio(request):
 
 def preprocess(request):
     dataset = load_data_from_sesion(request)
+    if not isinstance(dataset, Dataset):
+        return dataset
 
     df = pd.read_csv(io.StringIO(dataset.data))
 
@@ -77,17 +96,21 @@ def preprocess(request):
 
 def models(request):
     dataset = load_data_from_sesion(request)
+    if not isinstance(dataset, Dataset):
+        return dataset
 
     return render(request, "models.html", {"dataset": dataset})
 
 def run_model(request):
     dataset = load_data_from_sesion(request)
+    if not isinstance(dataset, Dataset):
+        return dataset
 
     return render(request, "run.html", {"dataset": dataset})
 
 def visualize(request):
     dataset = load_data_from_sesion(request)
+    if not isinstance(dataset, Dataset):
+        return dataset
 
     return render(request, "visualize.html", {"dataset": dataset})
-
-
