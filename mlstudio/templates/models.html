@@ -7,7 +7,95 @@
 {% block content %}
     {% include "_submenu.html" %}
 
+    <style>
+        .card-fixed-200 {
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        .card-fixed-400 {
+            height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
     <h2>Modele datasetu: {{ dataset.name }}</h2>
 
+    <!-- Window 1  -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm card-fixed-200">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Wybór modelu</h5>
+
+                    <div class="bg-light p-3">
+                        <form method="post">
+                            {% csrf_token %}
+                            <label for="selected_model" class="form-label">Wybierz model:</label>
+                            <select name="selected_model" id="selected_model" class="form-select" onchange="this.form.submit()">
+                                <option value="">-- wybierz model --</option>
+                                {% for model in models %}
+                                    <option value="{{ model.id }}" {% if selected_model and model.id == selected_model.id %}selected{% endif %}>
+                                        {{ model.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Window 2  -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm card-fixed-400">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Parametry modelu</h5>
+
+                    <div class="bg-light p-3">
+                        {% if not selected_model %}
+                            <p>Wybierz model, aby wyświetlić jego parametry.</p>
+                        {% else %}
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="selected_model" value="{{ selected_model.id }}">
+                                <table class="table table-sm table-bordered bg-white">
+                                    <thead>
+                                        <tr>
+                                            <th>Nazwa parametru</th>
+                                            <th>Wartość</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for param in parameters %}
+                                            <tr>
+                                                <td>
+                                                    {{ param.name }}
+                                                    {% if param.is_common %}
+                                                        <small class="text-muted">(wspólny)</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <input type="text" name="param_{{ param.id }}" value="{{ param.value }}" class="form-control">
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <button type="submit" name="save_params" class="btn btn-success">💾 Zapisz ustawienia</button>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
 
 {% endblock %}

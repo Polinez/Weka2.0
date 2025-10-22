@@ -8,6 +8,8 @@ from django.contrib import messages
 import pandas as pd
 import io
 
+from .models import MLModel, ModelParameter
+
 
 def load_data_from_sesion(request):
     dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
@@ -18,7 +20,7 @@ def load_data_from_sesion(request):
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
-    # Jeśli brak ustawionej kolumny docelowej -> przekieruj do ustawienia
+    # if no target column, redirect to set target
     if not dataset.target_column:
         messages.error(request, "Brak ustawionej kolumny docelowej dla wybranego datasetu. Ustaw ją najpierw.")
         return redirect("loadData:set_target", dataset.id)
@@ -31,7 +33,7 @@ def load_data_from_sesion(request):
 def select_dataset(request, dataset_id):
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
-    # Jeśli dataset nie ma ustawionego targetu - poinformuj i przekieruj do ustawienia
+    # if no target column, redirect to set target
     if not dataset.target_column:
         messages.error(request, "Nie można wybrać datasetu bez ustawionej kolumny docelowej. Ustaw ją najpierw.")
         return redirect("loadData:set_target", dataset.id)
@@ -42,7 +44,7 @@ def select_dataset(request, dataset_id):
 @login_required()
 def studio(request):
     dataset = load_data_from_sesion(request)
-    # jeśli funkcja zwróciła HttpResponse (np. redirect z komunikatem), przekaż ją dalej
+    # if not dataset, load_data_from_session has already handled the response
     if not isinstance(dataset, Dataset):
         return dataset
 
@@ -99,7 +101,34 @@ def models(request):
     if not isinstance(dataset, Dataset):
         return dataset
 
-    return render(request, "models.html", {"dataset": dataset})
+    models_list = MLModel.objects.all()
+    selected_model_id = request.POST.get("selected_model")
+    selected_model = None
+    parameters = None
+
+    # user sekected a model from list
+    if selected_model_id:
+        selected_model = MLModel.objects.filter(id=selected_model_id).first()
+        if selected_model:
+            parameters = selected_model.parameters.all()
+
+    # user saves parameters
+    if request.method == "POST" and "save_params" in request.POST:
+        for key, value in request.POST.items():
+            if key.startswith("param_"):
+                param_id = key.replace("param_", "")
+                param = ModelParameter.objects.filter(id=param_id).first()
+                if param:
+                    param.value = value
+                    param.save()
+        return redirect("mlstudio:models")
+
+    return render(request, "models.html", {
+        "dataset": dataset,
+        "models_list": models_list,
+        "selected_model": selected_model,
+        "parameters": parameters,
+    })
 
 def run_model(request):
     dataset = load_data_from_sesion(request)
