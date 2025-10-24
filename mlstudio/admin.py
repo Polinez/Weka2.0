@@ -1,6 +1,5 @@
 from django.contrib import admin
-from django.contrib import admin
-from .models import  MLModel, ModelParameter
+from .models import MLModel, ModelParameter, CommonParameter, DatasetModelState
 
 # Register your models here.
 #to add parameters while adding models in admin panel
@@ -17,5 +16,15 @@ class MLModelAdmin(admin.ModelAdmin):
 
 @admin.register(ModelParameter)
 class ModelParameterAdmin(admin.ModelAdmin):
-    list_display = ("model", "name", "value", "is_common")
-    list_filter = ("model", "is_common")
+    list_display = ("model", "name", "value")
+    list_filter = ("model",)
+
+@admin.register(CommonParameter)
+class CommonParameterAdmin(admin.ModelAdmin):
+    list_display = ("name", "value")
+
+@admin.register(DatasetModelState)
+class DatasetModelStateAdmin(admin.ModelAdmin):
+    list_display = ("user", "dataset", "model")
+    list_filter = ("user", "dataset", "model")
+    search_fields = ("user__username", "dataset__name", "model__name")

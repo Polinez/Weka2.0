@@ -1,4 +1,7 @@
 from django.db import models
+from loadData.models import Dataset
+from django.contrib.auth.models import User
+
 
 class MLModel(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -12,8 +15,29 @@ class ModelParameter(models.Model):
     model = models.ForeignKey(MLModel, on_delete=models.CASCADE, related_name="parameters")
     name = models.CharField(max_length=100)
     value = models.CharField(max_length=100)
-    is_common = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.model.name}: {self.name} = {self.value}"
 
+
+
+class CommonParameter(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    value = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} = {self.value}"
+
+
+class DatasetModelState(models.Model):
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="model_states")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    model = models.ForeignKey(MLModel, on_delete=models.CASCADE)
+    default_parameters = models.JSONField(default=dict)
+    parameters = models.JSONField(default=dict)
+
+    class Meta:
+        unique_together = ("dataset", "user")  # onli 1 model state per user per dataset
+
+    def __str__(self):
+        return f"{self.user.username} | {self.dataset.name} | {self.model.name}"

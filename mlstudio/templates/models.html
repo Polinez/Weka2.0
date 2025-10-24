@@ -9,7 +9,7 @@
 
     <style>
         .card-fixed-200 {
-            height: 200px;
+            height: 180px;
             overflow-y: auto;
         }
 
@@ -21,81 +21,109 @@
 
     <h2>Modele datasetu: {{ dataset.name }}</h2>
 
-    <!-- Window 1  -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm card-fixed-200">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Wybór modelu</h5>
+    <form method="post">
+        {% csrf_token %}
 
-                    <div class="bg-light p-3">
-                        <form method="post">
-                            {% csrf_token %}
+        <!-- Window 1  -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm card-fixed-200">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Wybór modelu</h5>
+
+                        <div class="bg-light p-3">
                             <label for="selected_model" class="form-label">Wybierz model:</label>
                             <select name="selected_model" id="selected_model" class="form-select" onchange="this.form.submit()">
                                 <option value="">-- wybierz model --</option>
-                                {% for model in models %}
+                                {% for model in models_list %}
                                     <option value="{{ model.id }}" {% if selected_model and model.id == selected_model.id %}selected{% endif %}>
                                         {{ model.name }}
                                     </option>
                                 {% endfor %}
                             </select>
-                        </form>
-                    </div>
+                        </div>
 
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Window 2  -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card shadow-sm card-fixed-400">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Parametry modelu</h5>
+        <!-- Window 2  -->
+        <div class="row">
 
-                    <div class="bg-light p-3">
-                        {% if not selected_model %}
-                            <p>Wybierz model, aby wyświetlić jego parametry.</p>
-                        {% else %}
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="selected_model" value="{{ selected_model.id }}">
-                                <table class="table table-sm table-bordered bg-white">
-                                    <thead>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm card-fixed-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Parametry wczytania danych</h5>
+
+                        <div class="bg-light p-3">
+                            <table class="table table-sm table-bordered bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>Nazwa parametru</th>
+                                        <th>Wartość</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, value in common_parameters.items %}
+                                    <tr>
+                                        <td>{{ name }}</td>
+                                        <td>
+                                            <input type="text" name="common_{{ name }}" value="{{ value }}" class="form-control">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <div class="col-md-6">
+                <div class="card shadow-sm card-fixed-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Parametry modelu</h5>
+
+                        <div class="bg-light p-3">
+                            {% if selected_model %}
+                            <table class="table table-sm table-bordered bg-white">
+                                <thead>
+                                    <tr>
+                                        <th>Nazwa parametru</th>
+                                        <th>Wartość</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for name, value in model_parameters.items %}
                                         <tr>
-                                            <th>Nazwa parametru</th>
-                                            <th>Wartość</th>
+                                            <td>{{ name }}</td>
+                                            <td>
+                                                <input type="text" name="param_{{ name }}" value="{{ value }}" class="form-control">
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for param in parameters %}
-                                            <tr>
-                                                <td>
-                                                    {{ param.name }}
-                                                    {% if param.is_common %}
-                                                        <small class="text-muted">(wspólny)</small>
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    <input type="text" name="param_{{ param.id }}" value="{{ param.value }}" class="form-control">
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                                <button type="submit" name="save_params" class="btn btn-success">💾 Zapisz ustawienia</button>
-                            </form>
-                        {% endif %}
-                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p>Wybierz model, aby wyświetlić jego parametry.</p>
+                            {% endif %}
+                        </div>
 
+                    </div>
                 </div>
             </div>
         </div>
 
-
-
-    </div>
+            <!-- Save button -->
+      <div class="text-center my-4">
+            <button type="submit" name="save_all" class="btn btn-success btn-lg">💾 Zapisz wszystkie ustawienia</button>
+        </div>
+    </form>
 
 {% endblock %}
