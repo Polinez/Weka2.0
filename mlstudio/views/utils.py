@@ -2,7 +2,25 @@ import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 import pandas as pd
-import numpy as np
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from loadData.models import Dataset
+
+def load_data_from_sesion(request):
+    dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
+
+    if not dataset_id:
+        messages.error(request, "Nie wybrano datasetu. Wybierz dataset lub załaduj nowy.")
+        return redirect("loadData:loadData")
+
+    dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+
+    # if no target column, redirect to set target
+    if not dataset.target_column:
+        messages.error(request, "Brak ustawionej kolumny docelowej dla wybranego datasetu. Ustaw ją najpierw.")
+        return redirect("loadData:set_target", dataset.id)
+
+    return dataset
 
 def get_graph():
     buffer = BytesIO()

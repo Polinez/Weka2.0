@@ -41,3 +41,16 @@ class DatasetModelState(models.Model):
 
     def __str__(self):
         return f"{self.user.username} | {self.dataset.name} | {self.model.name}"
+
+
+class MLRun(models.Model):
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="runs")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    model = models.ForeignKey("MLModel", on_delete=models.CASCADE)
+    common_parameters = models.JSONField(default=dict)
+    model_parameters = models.JSONField(default=dict)
+    result = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Run {self.id} | {self.user.username} | {self.dataset.name}"

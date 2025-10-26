@@ -8,6 +8,138 @@
 
     {% include "_submenu.html" %}
 
+    <style>
+        .card-auto-400 {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .card-fixed-400 {
+            height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
     <h2>Uruchomienie datasetu: {{ dataset.name }}</h2>
+
+    <form method="post">
+    {% csrf_token %}
+
+        <!-- Window 1  -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm card-auto-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Podsumowanie parametrów uczenia:</h5>
+
+                        <div class="bg-light p-3">
+                            <table class="table table-sm table-bordered bg-white mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nazwa parametru</th>
+                                        <th>Wartość</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if state and state.model %}
+                                        <tr>
+                                            <td>Wybrany model</td>
+                                            <td>{{ state.model.name }}</td>
+                                        </tr>
+                                    {% elif selected_run %}
+                                        <tr>
+                                            <td>Wybrany model</td>
+                                            <td>{{ selected_run.model.name }}</td>
+                                        </tr>
+                                    {% endif %}
+
+                                    {% for name, value in displayed_common_params.items %}
+                                        <tr>
+                                            <td>{{ name }}</td>
+                                            <td>
+                                                {{ value }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+
+                                    {% for name, value in displayed_model_params.items %}
+                                        <tr>
+                                            <td>{{ name }}</td>
+                                            <td>
+                                                {{ value }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run button -->
+      <div class="text-center my-4">
+            <button type="submit" name="run_model" class="btn btn-success btn-lg">Uruchom model</button>
+      </div>
+
+    </form>
+
+    <!-- 2 Windows -->
+    <div class="row mb-3">
+
+            <div class="col-md-4">
+                <div class="card shadow-sm card-fixed-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Uruchomienia:</h5>
+
+                        <div class="bg-light p-3">
+                            <ul class="list-group list-group-flush">
+                                {% for run in runs %}
+                                <li class="list-group-item {% if selected_run and selected_run.id == run.id %}active{% endif %}">
+                                    <a href="?run_id={{ run.id }}">
+                                        Uruchomienie {{ run.id }} - {{ run.created_at }}
+                                    </a>
+                                </li>
+                                {% empty %}
+                                <li class="list-group-item">Brak uruchomień</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <div class="col-md-8">
+                <div class="card shadow-sm card-fixed-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Wynik uruchomienia:</h5>
+
+                        <div class="bg-light p-3">
+                            {% if selected_run %}
+                                <pre>{{ selected_run.result|pprint }}</pre>
+                                <!-- lub -->
+                                <table class="table table-sm">
+                                    {% for key, value in selected_run.result.items %}
+                                    <tr>
+                                        <td><strong>{{ key }}:</strong></td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </table>
+                            {% else %}
+                                <p>Wybierz uruchomienie z listy aby zobaczyć wyniki</p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+    </div>
 
 {% endblock %}
