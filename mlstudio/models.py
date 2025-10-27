@@ -3,6 +3,16 @@ from loadData.models import Dataset
 from django.contrib.auth.models import User
 
 
+
+
+PARAM_TYPES = [
+        ('str', 'str'),
+        ('int', 'int'),
+        ('float', 'float'),
+        ('bool', 'bool'),
+    ]
+
+
 class MLModel(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -15,6 +25,11 @@ class ModelParameter(models.Model):
     model = models.ForeignKey(MLModel, on_delete=models.CASCADE, related_name="parameters")
     name = models.CharField(max_length=100)
     value = models.CharField(max_length=100)
+    data_type = models.CharField(
+        max_length=10,
+        choices=PARAM_TYPES,
+        default='str',
+    )
 
     def __str__(self):
         return f"{self.model.name}: {self.name} = {self.value}"
@@ -24,6 +39,11 @@ class ModelParameter(models.Model):
 class CommonParameter(models.Model):
     name = models.CharField(max_length=100, unique=True)
     value = models.CharField(max_length=100)
+    data_type = models.CharField(
+        max_length=10,
+        choices=PARAM_TYPES,
+        default='float'
+    )
 
     def __str__(self):
         return f"{self.name} = {self.value}"

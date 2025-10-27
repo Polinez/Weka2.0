@@ -66,11 +66,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for name, value in common_parameters.items %}
+                                    {% for param in common_parameters %}
                                     <tr>
-                                        <td>{{ name }}</td>
+                                        <td>{{ param.name }}</td>
                                         <td>
-                                            <input type="text" name="common_{{ name }}" value="{{ value }}" class="form-control">
+                                            {% if param.data_type == 'int' %}
+                                                <input type="number" step="1" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+
+                                            {% elif param.data_type == 'float' %}
+                                                <input type="number" step="any" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+
+                                            {% else %}
+                                                <input type="text" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -100,11 +108,25 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for name, value in model_parameters.items %}
+                                    {% for param in model_parameters %}
                                         <tr>
-                                            <td>{{ name }}</td>
+                                            <td>{{ param.name }}</td>
                                             <td>
-                                                <input type="text" name="param_{{ name }}" value="{{ value }}" class="form-control">
+                                                {% if param.data_type == 'bool' %}
+                                                    <select name="param_{{ param.name }}" class="form-select">
+                                                        <option value="True" {% if param.value == "True" or param.value is True %}selected{% endif %}>True</option>
+                                                        <option value="False" {% if param.value == "False" or param.value is False %}selected{% endif %}>False</option>
+                                                    </select>
+
+                                                {% elif param.data_type == 'int' %}
+                                                    <input type="number" step="1" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+
+                                                {% elif param.data_type == 'float' %}
+                                                    <input type="number" step="any" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+
+                                                {% else %}
+                                                    <input type="text" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% endfor %}

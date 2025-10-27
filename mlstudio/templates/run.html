@@ -18,6 +18,12 @@
             height: 400px;
             overflow-y: auto;
         }
+
+        .list-group-item.active {
+            background-color: #e9ecef;
+            color: #212529;
+            border-color: #ced4da;
+        }
     </style>
 
     <h2>Uruchomienie datasetu: {{ dataset.name }}</h2>
@@ -41,15 +47,10 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% if state and state.model %}
+                                    {% if model_to_display %}
                                         <tr>
                                             <td>Wybrany model</td>
-                                            <td>{{ state.model.name }}</td>
-                                        </tr>
-                                    {% elif selected_run %}
-                                        <tr>
-                                            <td>Wybrany model</td>
-                                            <td>{{ selected_run.model.name }}</td>
+                                            <td>{{ model_to_display.name }}</td>
                                         </tr>
                                     {% endif %}
 
@@ -94,24 +95,26 @@
                     <div class="card-body">
                         <h5 class="card-title mb-3">Uruchomienia:</h5>
 
-                        <div class="bg-light p-3">
-                            <ul class="list-group list-group-flush">
-                                {% for run in runs %}
-                                <li class="list-group-item {% if selected_run and selected_run.id == run.id %}active{% endif %}">
-                                    <a href="?run_id={{ run.id }}">
-                                        Uruchomienie {{ run.id }} - {{ run.created_at }}
-                                    </a>
-                                </li>
-                                {% empty %}
-                                <li class="list-group-item">Brak uruchomień</li>
-                                {% endfor %}
-                            </ul>
+                        <div class="list-group list-group-flush">
+                            {% for run in runs %}
+                                <a href="?run_id={{ run.id }}"
+                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                                        {% if selected_run and selected_run.id == run.id %}active{% endif %}">
+
+                                    <strong>Uruchomienie {{ run.id }}</strong>
+
+                                    <small class="text-muted">{{ run.created_at|date:"Y-m-d H:i" }}</small>
+                                </a>
+                            {% empty %}
+                                <div class="list-group-item">
+                                    Brak uruchomień
+                                </div>
+                            {% endfor %}
                         </div>
 
                     </div>
                 </div>
             </div>
-
 
 
 
@@ -123,7 +126,6 @@
                         <div class="bg-light p-3">
                             {% if selected_run %}
                                 <pre>{{ selected_run.result|pprint }}</pre>
-                                <!-- lub -->
                                 <table class="table table-sm">
                                     {% for key, value in selected_run.result.items %}
                                     <tr>

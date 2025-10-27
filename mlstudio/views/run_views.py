@@ -5,7 +5,8 @@ from django.shortcuts import render, redirect , get_object_or_404
 from django.contrib import messages
 
 from ..models import DatasetModelState, MLRun
-from .run_ml_model import run_ml_model
+
+from mlstudio.views.ml_models.run_ml_model import run_ml_model
 
 
 @login_required()
@@ -30,6 +31,7 @@ def run_model(request):
     selected_run = None
     displayed_common_params = {}
     displayed_model_params = {}
+    model_to_display = None
 
     #if run clicked on previous runs
     run_id = request.GET.get("run_id")
@@ -37,9 +39,11 @@ def run_model(request):
         selected_run = get_object_or_404(MLRun, id=run_id, user=user)
         displayed_common_params = selected_run.common_parameters
         displayed_model_params = selected_run.model_parameters
+        model_to_display = selected_run.model
     elif state:
         displayed_common_params = state.default_parameters
         displayed_model_params = state.parameters
+        model_to_display = state.model
 
     # run model button clicked
     if request.method == "POST" and "run_model" in request.POST:
@@ -47,7 +51,7 @@ def run_model(request):
         # run model with current parameters
         result = run_ml_model(
             dataset,
-            state.model,
+            state.model.name,
             state.default_parameters,
             state.parameters
         )
@@ -67,7 +71,7 @@ def run_model(request):
         "dataset": dataset,
         "runs": runs,
         "selected_run": selected_run,
-        "selected_model": state.model,
+        "model_to_display": model_to_display,
         "displayed_common_params": displayed_common_params,
         "displayed_model_params": displayed_model_params,
     })
