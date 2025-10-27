@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from loadData.models import Dataset
 
-def load_data_from_sesion(request):
+def load_data_from_session(request):
     dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
 
     if not dataset_id:

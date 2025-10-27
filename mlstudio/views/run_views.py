@@ -1,4 +1,4 @@
-from .utils import load_data_from_sesion
+from .utils import load_data_from_session
 from django.contrib.auth.decorators import login_required
 from loadData.models import Dataset
 from django.shortcuts import render, redirect , get_object_or_404
@@ -11,7 +11,7 @@ from mlstudio.views.ml_models.run_ml_model import run_ml_model
 
 @login_required()
 def run_model(request):
-    dataset = load_data_from_sesion(request)
+    dataset = load_data_from_session(request)
     if not isinstance(dataset, Dataset):
         return dataset
 

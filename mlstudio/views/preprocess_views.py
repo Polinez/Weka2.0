@@ -1,10 +1,10 @@
-from .utils import load_data_from_sesion
+from .utils import load_data_from_session
 from django.shortcuts import render
 import pandas as pd, io
 from loadData.models import Dataset
 
 def preprocess(request):
-    dataset = load_data_from_sesion(request)
+    dataset = load_data_from_session(request)
     if not isinstance(dataset, Dataset):
         return dataset
 

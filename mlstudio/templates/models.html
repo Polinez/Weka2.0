@@ -1,8 +1,5 @@
 {% extends "base.html" %}
-
-{% block title %}ML Studio - {{ dataset.name }}{% endblock %}
-
-
+{% load l10n %} {% block title %}ML Studio - {{ dataset.name }}{% endblock %}
 
 {% block content %}
     {% include "_submenu.html" %}
@@ -24,7 +21,6 @@
     <form method="post">
         {% csrf_token %}
 
-        <!-- Window 1  -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card shadow-sm card-fixed-200">
@@ -48,7 +44,6 @@
             </div>
         </div>
 
-        <!-- Window 2  -->
         <div class="row">
 
 
@@ -71,13 +66,26 @@
                                         <td>{{ param.name }}</td>
                                         <td>
                                             {% if param.data_type == 'int' %}
-                                                <input type="number" step="1" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+
+                                                {% if param.name == 'random_state' %}
+                                                    <input type="number" step="1" min="0" name="common_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control" title="Wymagane min. 0">
+                                                {% else %}
+                                                    <input type="number" step="1" name="common_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
+                                                {% endif %}
 
                                             {% elif param.data_type == 'float' %}
-                                                <input type="number" step="any" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                {% localize off %}
+
+                                                {% if param.name == 'test_size' %}
+                                                    <input type="number" step="0.01" min="0.01" max="0.99" name="common_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control" title="Wartość musi być między 0.01 a 0.99">
+                                                {% else %}
+                                                    <input type="number" step="any" name="common_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
+                                                {% endif %}
+
+                                                {% endlocalize %}
 
                                             {% else %}
-                                                <input type="text" name="common_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                <input type="text" name="common_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -115,17 +123,23 @@
                                                 {% if param.data_type == 'bool' %}
                                                     <select name="param_{{ param.name }}" class="form-select">
                                                         <option value="True" {% if param.value == "True" or param.value is True %}selected{% endif %}>True</option>
-                                                        <option value="False" {% if param.value == "False" or param.value is False %}selected{% endif %}>False</option>
+                                                        <option value="False" {% if not param.value or param.value == "False" or param.value is False %}selected{% endif %}>False</option>
                                                     </select>
 
                                                 {% elif param.data_type == 'int' %}
-                                                    <input type="number" step="1" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                    {% if param.name == 'max_depth' or param.name == 'min_samples_split' or param.name == 'n_neighbors' %}
+                                                        <input type="number" step="1" min="1" name="param_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control" title="Wymagane min. 1">
+                                                    {% else %}
+                                                        <input type="number" step="1" name="param_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
+                                                    {% endif %}
 
                                                 {% elif param.data_type == 'float' %}
-                                                    <input type="number" step="any" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                    {% localize off %}
+                                                    <input type="number" step="any" name="param_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
+                                                    {% endlocalize %}
 
                                                 {% else %}
-                                                    <input type="text" name="param_{{ param.name }}" value="{{ param.value }}" class="form-control">
+                                                    <input type="text" name="param_{{ param.name }}" value="{{ param.value|default:'' }}" class="form-control">
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -142,8 +156,7 @@
             </div>
         </div>
 
-            <!-- Save button -->
-      <div class="text-center my-4">
+            <div class="text-center my-4">
             <button type="submit" name="save_all" class="btn btn-success btn-lg">💾 Zapisz wszystkie ustawienia</button>
       </div>
     </form>

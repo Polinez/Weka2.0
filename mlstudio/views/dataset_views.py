@@ -6,7 +6,7 @@ from django.contrib import messages
 
 import pandas as pd
 import io
-from .utils import get_plot, load_data_from_sesion
+from .utils import get_plot, load_data_from_session
 
 
 
@@ -25,7 +25,7 @@ def select_dataset(request, dataset_id):
 
 @login_required()
 def studio(request):
-    dataset = load_data_from_sesion(request)
+    dataset = load_data_from_session(request)
     # if not dataset, load_data_from_session has already handled the response
     if not isinstance(dataset, Dataset):
         return dataset
