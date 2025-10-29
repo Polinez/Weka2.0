@@ -125,7 +125,6 @@
 
                         <div class="bg-light p-3">
                             {% if selected_run %}
-                                <pre>{{ selected_run.result|pprint }}</pre>
                                 <table class="table table-sm">
                                     {% for key, value in selected_run.result.items %}
                                     <tr>

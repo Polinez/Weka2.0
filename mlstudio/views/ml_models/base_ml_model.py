@@ -33,9 +33,7 @@ class BaseMLModel(ABC):
         X = df.drop(columns=[target_column])
         y = df[target_column]
 
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state
-        )
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
     @abstractmethod
     def create_model(self):

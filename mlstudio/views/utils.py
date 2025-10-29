@@ -15,6 +15,13 @@ def load_data_from_session(request):
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
+    # check if dataset not in session
+    working_data = request.session.get('working_data')
+    session_dataset_id = request.session.get('dataset_id_for_data')
+
+    if working_data and session_dataset_id == dataset.id:
+        dataset.data = working_data
+
     # if no target column, redirect to set target
     if not dataset.target_column:
         messages.error(request, "Brak ustawionej kolumny docelowej dla wybranego datasetu. Ustaw ją najpierw.")
