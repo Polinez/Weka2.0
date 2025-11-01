@@ -8,25 +8,39 @@ from mlstudio.views.ml_models.implementations import (
     DecisionTreeRegressorModel,
     DecisionTreeClassificationModel,
     KNNClassifierModel,
-    SVMModel,
+    SVCModel,
+    SVRModel,
     NaiveBayesModel,
     RandomForestClassifierModel,
+    RandomForestRegressorModel,
+    KMeansModel,
+    DBSCANModel,
+    PCAModel,
 )
 
 MODEL_MAPPING = {
     # "modelName": RealMOdel from implementations.py
 
-    # Modele Regresyjne
+    # Regression Models
     "Regresja Liniowa": LinearRegressionModel,
-    "Drzewo Regresyjne": DecisionTreeRegressorModel,
+    "Drzewo decyzyjne (Regresja)": DecisionTreeRegressorModel,  # Pełna nazwa z UI
+    "Lasy Losowe (Regresja)": RandomForestRegressorModel,  # Pełna nazwa z UI
+    "Maszyna wektorów nosnych (SVM) (Regresja)": SVRModel,  # SVR
 
-    # Modele Klasyfikacyjne
+    # Classification Models
     "Regresja Logistyczna": LogisticRegressionModel,
-    "Drzewo Decyzyjne": DecisionTreeClassificationModel,
-    "k-Najbliższych Sąsiadów (KNN)": KNNClassifierModel,
-    "Maszyny Wektorów Nośnych (SVM)": SVMModel,
+    "Drzewo decyzyjne (Klasyfikacja)": DecisionTreeClassificationModel,  # Pełna nazwa z UI
+    "K-najblizszych sasiadów (KNN)": KNNClassifierModel,  # Pełna nazwa z UI
     "Naiwny Klasyfikator Bayesa": NaiveBayesModel,
-    "Las Losowy": RandomForestClassifierModel,
+    "Lasy Losowe (Klasyfikacja)": RandomForestClassifierModel,  # Pełna nazwa z UI
+    "Maszyna wektorów nosnych (SVM) (Klasyfikacja)": SVCModel,  # SVC
+
+    # Cluster Models
+    "K-Średnich (K-Means)": KMeansModel,
+    "DBSCAN": DBSCANModel,
+
+    # Dimensionality Reduction Models
+    "Redukcja Wymiarowości (PCA)": PCAModel,
 }
 
 def run_ml_model(dataset:Dataset, modelName:str, common_parameters:dict, model_parameters:dict):

@@ -24,6 +24,7 @@ class MLModel(models.Model):
 class ModelParameter(models.Model):
     model = models.ForeignKey(MLModel, on_delete=models.CASCADE, related_name="parameters")
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, default='')
     value = models.CharField(max_length=100)
     data_type = models.CharField(
         max_length=10,
@@ -38,6 +39,7 @@ class ModelParameter(models.Model):
 
 class CommonParameter(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, default='')
     value = models.CharField(max_length=100)
     data_type = models.CharField(
         max_length=10,
