@@ -142,7 +142,8 @@ def _get_parameters_for_template(definitions, values_dict):
         params_for_template.append({
             'name': definition.name,
             'value': value,
-            'data_type': definition.data_type
+            'data_type': definition.data_type,
+            'description': definition.description
         })
     return params_for_template
 
@@ -167,7 +168,8 @@ def _build_params_from_post(definitions, post_data, prefix):
         params_for_template.append({
             'name': definition.name,
             'value': raw_value,  # Pass the raw string to the template
-            'data_type': definition.data_type
+            'data_type': definition.data_type,
+            'description': definition.description
         })
     return params_for_template
 
@@ -211,7 +213,7 @@ def models(request):
     user = request.user
 
     # 2. Get definitions (these are constant for the page)
-    models_list = MLModel.objects.all()
+    models_list = MLModel.objects.filter(model_type=dataset.learning_type)
     common_param_definitions = {p.name: p for p in CommonParameter.objects.all()}
 
     # --- 3. Handle GET request (initial page load) ---
@@ -221,18 +223,12 @@ def models(request):
 
         # 3a. Prepare Common Parameters for display
         # Start with the global defaults...
-        default_common_vals = {
-            p.name: convert_value(p.value, p.data_type)
-            for p in common_param_definitions.values()
-        }
+        default_common_vals = { p.name: convert_value(p.value, p.data_type) for p in common_param_definitions.values() }
         # ...then override with user's *saved* values.
         common_values_to_display = default_common_vals.copy()
         common_values_to_display.update(saved_common_params)
 
-        common_parameters_for_template = _get_parameters_for_template(
-            common_param_definitions,
-            common_values_to_display
-        )
+        common_parameters_for_template = _get_parameters_for_template( common_param_definitions, common_values_to_display )
 
         # 3b. Prepare Model-Specific Parameters for display
         model_parameters_for_template = []
@@ -252,7 +248,8 @@ def models(request):
             )
 
         context = {
-            "dataset": dataset, "models_list": models_list,
+            "dataset": dataset,
+            "models_list": models_list,
             "selected_model": selected_model,
             "common_parameters": common_parameters_for_template,
             "model_parameters": model_parameters_for_template

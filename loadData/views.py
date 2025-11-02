@@ -1,11 +1,13 @@
-from django.shortcuts import render, redirect
-from .models import Dataset
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Dataset, LEARNING_TYPE_CHOICES
 import pandas as pd
 import io
 from django.db import IntegrityError  # Correct import for catching integrity errors
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 import mimetypes
+
+from django.contrib import messages
 
 
 def validate_csv_file(uploaded_file):
@@ -75,21 +77,42 @@ def set_target(request, dataset_id):
     """
     Render of site to set target column for a dataset.
     """
-    dataset = Dataset.objects.get(id=dataset_id, user=request.user)
+    dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
     df = dataset_to_dataframe(dataset)
     columns = list(df.columns)
+    error = None
 
     if request.method == "POST":
+        learning_type = request.POST.get("learning_type") or 'CLASSIFICATION'
         target_col = request.POST.get("target_column")
-        if target_col in columns:
-            dataset.target_column = target_col
-            dataset.save()
-            return redirect("loadData:load_data")
-        else:
-            error = "Nieprawidłowa kolumna"
-            return render(request, "decisionColumn.html", {"dataset": dataset, "columns": columns, "error": error})
 
-    return render(request, "decisionColumn.html", {"dataset": dataset, "columns": columns})
+        # Validation logic
+        if learning_type in ['REGRESSION', 'CLASSIFICATION']:
+            if not target_col:
+                error = "Kolumna decyzyjna jest wymagana dla Regresji i Klasyfikacji."
+            elif target_col not in columns:
+                error = "Wybrana kolumna decyzyjna jest nieprawidłowa."
+            else:
+                dataset.target_column = target_col
+
+        elif learning_type in ['CLUSTERING', 'DIM_REDUCTION']:
+            dataset.target_column = None
+
+
+        # Save if no errors
+        if not error:
+            dataset.learning_type = learning_type
+            dataset.save()
+            messages.success(request, "Konfiguracja zadania została zapisana.")
+            return redirect("loadData:load_data")
+
+    context = {
+        "dataset": dataset,
+        "columns": columns,
+        "learning_type_choices": LEARNING_TYPE_CHOICES,
+        "error": error
+    }
+    return render(request, "decisionColumn.html", context)
 
 
 def dataset_to_dataframe(dataset):

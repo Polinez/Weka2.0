@@ -15,11 +15,6 @@ from .utils import get_plot, load_data_from_session
 def select_dataset(request, dataset_id):
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
-    # if no target column, redirect to set target
-    if not dataset.target_column:
-        messages.error(request, "Nie można wybrać datasetu bez ustawionej kolumny docelowej. Ustaw ją najpierw.")
-        return redirect("loadData:set_target", dataset.id)
-
     request.session['dataset_id'] = dataset.id  # Store dataset_id in session
     return redirect("mlstudio:studio")
 
@@ -41,10 +36,6 @@ def studio(request):
     else:
         selected_column = request.session.get("selected_column")
 
-    # if not selected
-    if not selected_column or selected_column not in columns:
-        selected_column = dataset.target_column
-        request.session["selected_column"] = selected_column
 
     # show everything if no column is selected
     graph = get_plot(df, columns=[selected_column])

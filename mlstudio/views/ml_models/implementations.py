@@ -19,6 +19,10 @@ class LogisticRegressionModel(BaseClassificationModel):
     def create_model(self):
         # Setting max_iter high to ensure convergence, as it might not be in the simplified UI parameters.
         self.model_parameters.setdefault('max_iter', 1000)
+        if 'class_weight' in self.model_parameters:
+            value = self.model_parameters['class_weight']
+            if value == 'None' or value == '':
+                self.model_parameters['class_weight'] = None
         self.model = LogisticRegression(**self.model_parameters)
 
 
@@ -27,6 +31,11 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get('max_depth') == 0:
             self.model_parameters['max_depth'] = None
+        # Convert "None" to None for class_weight
+        if 'class_weight' in self.model_parameters:
+            value = self.model_parameters['class_weight']
+            if value == 'None' or value == '':
+                self.model_parameters['class_weight'] = None
         self.model = DecisionTreeClassifier(**self.model_parameters)
 
 
@@ -37,6 +46,10 @@ class KNNClassifierModel(BaseClassificationModel):
 
 class SVCModel(BaseClassificationModel):
     def create_model(self):
+        if 'class_weight' in self.model_parameters:
+            value = self.model_parameters['class_weight']
+            if value == 'None' or value == '':
+                self.model_parameters['class_weight'] = None
         self.model = SVC(**self.model_parameters)
 
 
@@ -50,6 +63,11 @@ class RandomForestClassifierModel(BaseClassificationModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get('max_depth') == 0:
             self.model_parameters['max_depth'] = None
+        # Convert "None" to None for class_weight
+        if 'class_weight' in self.model_parameters:
+            value = self.model_parameters['class_weight']
+            if value == 'None' or value == '':
+                self.model_parameters['class_weight'] = None
         self.model = RandomForestClassifier(**self.model_parameters)
 
 

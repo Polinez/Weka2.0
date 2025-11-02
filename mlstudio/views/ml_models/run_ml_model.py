@@ -58,8 +58,6 @@ def run_ml_model(dataset:Dataset, modelName:str, common_parameters:dict, model_p
         df = pd.read_csv(io.StringIO(dataset.data))
 
         target_column = dataset.target_column
-        if not target_column:
-            raise ValueError(f"Target column '{target_column}' not found.")
 
         # Initialize and run the model
         ml_model_instance = ModelClass(

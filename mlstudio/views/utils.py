@@ -22,11 +22,6 @@ def load_data_from_session(request):
     if working_data and session_dataset_id == dataset.id:
         dataset.data = working_data
 
-    # if no target column, redirect to set target
-    if not dataset.target_column:
-        messages.error(request, "Brak ustawionej kolumny docelowej dla wybranego datasetu. Ustaw ją najpierw.")
-        return redirect("loadData:set_target", dataset.id)
-
     return dataset
 
 def get_graph():

@@ -14,8 +14,23 @@ PARAM_TYPES = [
 
 
 class MLModel(models.Model):
+
+    MODEL_TYPE_CHOICES = [
+        ('REGRESSION', 'Regresja'),
+        ('CLASSIFICATION', 'Klasyfikacja'),
+        ('CLUSTERING', 'Klasteryzacja'),
+        ('DIM_REDUCTION', 'Redukcja Wymiarowości'),
+    ]
+
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
+    model_type = models.CharField(
+        max_length=20,
+        choices=MODEL_TYPE_CHOICES,
+        null=False,
+        blank=False,
+        default='CLASSIFICATION'
+    )
 
     def __str__(self):
         return self.name

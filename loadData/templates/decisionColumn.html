@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %} Weka 2.0 - Wybór kolumny decyzyjnej {% endblock %}
+{% block title %} Weka 2.0 - Konfiguracja zadania {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-  <h2 class="text-center">Wybierz kolumnę decyzyjną dla: {{ dataset.name }}</h2>
+  <h2 class="text-center">Konfiguracja zadania dla: {{ dataset.name }}</h2>
 
   {% if error %}
     <div class="alert alert-danger">{{ error }}</div>
@@ -11,14 +11,31 @@
 
   <form method="post" class="mt-4">
     {% csrf_token %}
+
     <div class="mb-3">
+      <label for="learning_type" class="form-label">Typ zadania ML</label>
+      <select name="learning_type" id="learning_type" class="form-select" required>
+        {% for type_val, type_name in learning_type_choices %}
+          <option value="{{ type_val }}" {% if type_val == dataset.learning_type %}selected{% endif %}>
+            {{ type_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3" id="target_column_wrapper">
       <label for="target_column" class="form-label">Kolumna decyzyjna</label>
-      <select name="target_column" id="target_column" class="form-select" required>
+      <p class="form-text text-muted" style="margin-top: -10px;">
+          (Wymagana tylko dla zadań nadzorowanych, np. Regresji lub Klasyfikacji)
+      </p>
+      <select name="target_column" id="target_column" class="form-select">
+        <option value="">-- Brak (dla zadań nienadzorowanych) --</option>
         {% for col in columns %}
           <option value="{{ col }}" {% if col == dataset.target_column %}selected{% endif %}>{{ col }}</option>
         {% endfor %}
       </select>
     </div>
+
     <button type="submit" class="btn btn-success">Zapisz</button>
     <a href="{% url 'loadData:load_data' %}" class="btn btn-secondary">Anuluj</a>
   </form>
