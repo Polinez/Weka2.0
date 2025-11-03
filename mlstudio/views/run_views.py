@@ -1,3 +1,7 @@
+import io
+
+import pandas as pd
+
 from .utils import load_data_from_session
 from django.contrib.auth.decorators import login_required
 from loadData.models import Dataset
@@ -47,11 +51,16 @@ def run_model(request):
 
     # run model button clicked
     if request.method == "POST" and "run_model" in request.POST:
+        # get pre-processed data if it is
+        working_data_csv = request.session.get('working_data', dataset.data)
+
+        df = pd.read_csv(io.StringIO(working_data_csv))
 
         # run model with current parameters
         result = run_ml_model(
-            dataset,
+            df,
             state.model.name,
+            dataset.target_column,
             state.default_parameters,
             state.parameters
         )

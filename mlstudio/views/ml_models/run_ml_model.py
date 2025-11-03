@@ -1,6 +1,4 @@
-import io
 import pandas as pd
-from loadData.models import Dataset
 
 from mlstudio.views.ml_models.implementations import (
     LogisticRegressionModel,
@@ -43,21 +41,16 @@ MODEL_MAPPING = {
     "Redukcja Wymiarowości (PCA)": PCAModel,
 }
 
-def run_ml_model(dataset:Dataset, modelName:str, common_parameters:dict, model_parameters:dict):
+def run_ml_model(df:pd.DataFrame, model_name:str, target_column:str, common_parameters:dict, model_parameters:dict):
     """
         Function to run a machine learning model on a given dataset.
         finds the appropriate model class based on modelName,
     """
     try:
-        ModelClass = MODEL_MAPPING.get(modelName)
+        ModelClass = MODEL_MAPPING.get(model_name)
         if not ModelClass:
-            raise ValueError(f"Model '{modelName}' is not supported.")
+            raise ValueError(f"Model '{model_name}' is not supported.")
 
-
-        # Load dataset into a DataFrame
-        df = pd.read_csv(io.StringIO(dataset.data))
-
-        target_column = dataset.target_column
 
         # Initialize and run the model
         ml_model_instance = ModelClass(
@@ -66,7 +59,7 @@ def run_ml_model(dataset:Dataset, modelName:str, common_parameters:dict, model_p
             target_column=target_column
         )
 
-        # evaliate model
+        # evaluate model
         evaluation_result = ml_model_instance.run(df)
 
         return evaluation_result
@@ -75,5 +68,5 @@ def run_ml_model(dataset:Dataset, modelName:str, common_parameters:dict, model_p
 
         return {
             "error": str(e),
-            "model_name": modelName,
+            "model_name": model_name,
         }
