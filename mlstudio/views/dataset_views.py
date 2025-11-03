@@ -16,6 +16,10 @@ def select_dataset(request, dataset_id):
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
     request.session['dataset_id'] = dataset.id  # Store dataset_id in session
+
+    # clear previous selected_column in session
+    if 'selected_column' in request.session:
+        del request.session['selected_column']
     return redirect("mlstudio:studio")
 
 @login_required()
@@ -28,14 +32,24 @@ def studio(request):
     df = pd.read_csv(io.StringIO(dataset.data))  # convert to DataFrame
     data = df.head().values.tolist()
     columns = df.columns.tolist()
+    selected_column = None
 
     # selected column from POST or session
     if request.method == "POST":
         selected_column = request.POST.get("selected_column")
         request.session["selected_column"] = selected_column
-    else:
-        selected_column = request.session.get("selected_column")
+        return redirect("mlstudio:studio")
 
+    # GET method
+    selected_column = request.session.get("selected_column")
+
+    if selected_column not in columns:
+        if dataset.target_column and dataset.target_column in columns:
+            selected_column = dataset.target_column
+        else:
+            selected_column = columns[0] if columns else None
+
+        request.session["selected_column"] = selected_column
 
     # show everything if no column is selected
     graph = get_plot(df, columns=[selected_column])

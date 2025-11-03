@@ -11,7 +11,7 @@ def load_data_from_session(request):
 
     if not dataset_id:
         messages.error(request, "Nie wybrano datasetu. Wybierz dataset lub załaduj nowy.")
-        return redirect("loadData:loadData")
+        return redirect("loadData:load_data")
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
