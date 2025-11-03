@@ -48,7 +48,7 @@ class ModelParameter(models.Model):
     )
 
     def __str__(self):
-        return f"{self.model.name}: {self.name} = {self.value}"
+        return f"{self.model.name}: {self.name} = {self.value}: {self.data_type}"
 
 
 
