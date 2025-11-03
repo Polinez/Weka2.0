@@ -1,11 +1,11 @@
 {% extends "base.html" %} 
-{% block title %} Weka 2.0 - Strona Główna {% endblock %}
+{% block title %} AI Analyzer - Strona Główna {% endblock %}
 {% block content %}
 
 {% if user.is_authenticated %}
 
   <div class="container mt-5">
-    <h2 class="text-center">Witaj w Weka 2.0</h2>
+    <h2 class="text-center">Witaj w AI Analyzer</h2>
     <p class="text-center">Wprowadź swój dataset, na którym będziesz chciał przetestować modele ML</p>
     <form class="text-center mt-4" method="post" enctype="multipart/form-data">
       {% csrf_token %}
