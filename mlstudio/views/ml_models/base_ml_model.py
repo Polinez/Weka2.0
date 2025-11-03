@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score, silhouette_score, davies_bouldin_score
+from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score, silhouette_score, davies_bouldin_score, f1_score
 import json
 
 class BaseMLModel(ABC):
@@ -84,11 +84,15 @@ class BaseClassificationModel(BaseMLModel):
     def evaluate_model(self, y_pred):
         """Evaluation specific for classification: accuracy and report."""
         accuracy = accuracy_score(self.y_test, y_pred)
+        f1 = f1_score(self.y_test, y_pred, average='weighted', zero_division=0)
         report = classification_report(self.y_test, y_pred, output_dict=True, zero_division=0)
         return {
             "model_type": "Classification",
             "accuracy": accuracy,
-            "classification_report": report
+            "f1": f1,
+            "classification_report": report,
+            "y_test": self.y_test.tolist(),
+            "y_pred": y_pred.tolist()
         }
 
 
@@ -110,7 +114,9 @@ class BaseRegressionModel(BaseMLModel):
         return {
             "model_type": "Regression",
             "mean_squared_error": mse,
-            "r2_score": r2
+            "r2_score": r2,
+            "y_test": self.y_test.tolist(),
+            "y_pred": y_pred.tolist()
         }
 
 

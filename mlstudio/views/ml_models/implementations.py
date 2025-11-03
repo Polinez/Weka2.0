@@ -1,5 +1,12 @@
 from .base_ml_model import BaseClassificationModel, BaseRegressionModel, BaseUnsupervisedModel,BaseDimensionalityReduction
 
+# draw plots
+from ..utils import plot_to_base64
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn import tree
+
 # models
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -37,6 +44,33 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
             if value == 'None' or value == '':
                 self.model_parameters['class_weight'] = None
         self.model = DecisionTreeClassifier(**self.model_parameters)
+
+    def evaluate_model(self, y_pred):
+        evaluation = super().evaluate_model(y_pred)
+
+        try:
+            fig, ax = plt.subplots(figsize=(25, 15))
+
+            feature_names = self.X_train.columns.tolist()
+            class_names = [str(c) for c in self.model.classes_]
+
+            tree.plot_tree(
+                self.model,
+                feature_names=feature_names,
+                class_names=class_names,
+                filled=True,
+                rounded=True,
+                ax=ax,
+                fontsize=10
+            )
+
+            evaluation['plot_tree_base64'] = plot_to_base64(fig)
+
+        except Exception as e:
+            print(f"Błąd podczas rysowania drzewa decyzyjnego: {e}")
+            evaluation['plot_tree_base64'] = None  # Zapisz błąd
+
+        return evaluation
 
 
 class KNNClassifierModel(BaseClassificationModel):
@@ -86,6 +120,30 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
         if self.model_parameters.get('max_depth') == 0:
             self.model_parameters['max_depth'] = None
         self.model = DecisionTreeRegressor(**self.model_parameters)
+
+    def evaluate_model(self, y_pred):
+        evaluation = super().evaluate_model(y_pred)
+
+        try:
+            fig, ax = plt.subplots(figsize=(25, 15))
+            feature_names = self.X_train.columns.tolist()
+
+            tree.plot_tree(
+                self.model,
+                feature_names=feature_names,
+                filled=True,
+                rounded=True,
+                ax=ax,
+                fontsize=10
+            )
+
+            evaluation['plot_tree_base64'] = plot_to_base64(fig)
+
+        except Exception as e:
+            print(f"Błąd podczas rysowania drzewa regresji: {e}")
+            evaluation['plot_tree_base64'] = None
+
+        return evaluation
 
 
 class RandomForestRegressorModel(BaseRegressionModel):
