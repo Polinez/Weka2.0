@@ -3,7 +3,7 @@ from django.contrib import messages
 from .utils import load_data_from_session
 import pandas as pd
 import io
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
 from loadData.models import Dataset
 import numpy as np
 
@@ -112,7 +112,7 @@ def preprocess_apply(request):
     history_entry = ""
 
     try:
-        if operation == 'impute':
+        if operation == 'impute': # Imputation of missing values
             method = request.POST.get('imputation_method')
             if not method:
                 messages.warning(request, "Nie wybrano metody imputacji.")
@@ -129,7 +129,7 @@ def preprocess_apply(request):
                 df[selected_feature].fillna(fill_value, inplace=True)
             history_entry = f"Wypełniono braki w '{selected_feature}' metodą: {method}"
 
-        elif operation == 'encode':
+        elif operation == 'encode': # Encoding categorical features to numeric
             method = request.POST.get('encoding_method')
             if not method:
                 messages.warning(request, "Nie wybrano metody kodowania.")
@@ -138,9 +138,13 @@ def preprocess_apply(request):
             if method == 'label_encoder':
                 le = LabelEncoder()
                 df[selected_feature] = le.fit_transform(df[selected_feature].astype(str))
+            elif method == 'one_hot_encoder':
+                df = pd.get_dummies(df,columns=[selected_feature], prefix=selected_feature, drop_first=True,  dtype=int)
             history_entry = f"Zastosowano '{method}' na kolumnie '{selected_feature}'"
 
-        elif operation == 'scale':
+
+
+        elif operation == 'scale': # Scaling numeric features
             method = request.POST.get('scaling_method')
             if not method:
                 messages.warning(request, "Nie wybrano metody skalowania.")
