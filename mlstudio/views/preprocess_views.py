@@ -7,6 +7,15 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, M
 from loadData.models import Dataset
 import numpy as np
 
+pol_names = {
+    'mean': 'Średnia',
+    'median': 'Mediana',
+    'mode': 'Najczęstsza wartość',
+    'label_encoder': 'Kodowanie etykiet',
+    'one_hot_encoder': 'Kodowanie binarne (One-Hot)',
+    'standardization': 'Standaryzacja (Z-score)',
+    'normalization': 'Normalizacja (Min-Max)'
+}
 
 def preprocess(request):
     """
@@ -127,7 +136,7 @@ def preprocess_apply(request):
             elif method == 'mode':
                 fill_value = df[selected_feature].mode()[0]
                 df[selected_feature].fillna(fill_value, inplace=True)
-            history_entry = f"Wypełniono braki w '{selected_feature}' metodą: {method}"
+            history_entry = f"Wypełniono braki w '{selected_feature}' metodą: {pol_names.get(method, method)}"
 
         elif operation == 'encode': # Encoding categorical features to numeric
             method = request.POST.get('encoding_method')
@@ -140,7 +149,7 @@ def preprocess_apply(request):
                 df[selected_feature] = le.fit_transform(df[selected_feature].astype(str))
             elif method == 'one_hot_encoder':
                 df = pd.get_dummies(df,columns=[selected_feature], prefix=selected_feature, drop_first=True,  dtype=int)
-            history_entry = f"Zastosowano '{method}' na kolumnie '{selected_feature}'"
+            history_entry = f"Zastosowano '{pol_names.get(method, method)}' na kolumnie '{selected_feature}'"
 
 
 
@@ -156,7 +165,7 @@ def preprocess_apply(request):
             elif method == 'normalization':
                 scaler = MinMaxScaler()
                 df[[selected_feature]] = scaler.fit_transform(df[[selected_feature]])
-            history_entry = f"Zastosowano '{method}' na kolumnie '{selected_feature}'"
+            history_entry = f"Zastosowano '{pol_names.get(method, method)}' na kolumnie '{selected_feature}'"
 
         else:
             messages.warning(request, "Nieznana operacja.")

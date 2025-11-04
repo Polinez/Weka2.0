@@ -75,7 +75,7 @@ def get_plot(dataFrame, columns: list = None):
 
     # Plot histograms for each selected numeric column
     for col in columns:
-        plt.hist(df[col].dropna(), bins=30, alpha=0.5, label=col)
+        plt.hist(df[col].dropna(), bins=30, alpha=0.6, label=col, edgecolor='black', linewidth=1)
 
     plt.title("Rozkład wybranych cech numerycznych")
     plt.xlabel("Wartość cechy")

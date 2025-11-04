@@ -101,7 +101,7 @@
                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
                                         {% if selected_run and selected_run.id == run.id %}active{% endif %}">
 
-                                    <strong>Uruchomienie {{ run.id }}</strong>
+                                    <strong>Uruchomienie {{ forloop.revcounter }}</strong>
 
                                     <small class="text-muted">{{ run.created_at|date:"Y-m-d H:i" }}</small>
                                 </a>
@@ -134,7 +134,7 @@
                                     {% endfor %}
                                 </table>
                             {% else %}
-                                <p>Wybierz uruchomienie z listy aby zobaczyć wyniki</p>
+                                <p>Wybierz uruchomienie z listy 'Uruchomienia' aby zobaczyć wyniki</p>
                             {% endif %}
                         </div>
 

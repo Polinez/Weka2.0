@@ -1,21 +1,37 @@
 <div class="bg-secondary py-2 my-3 rounded-4 shadow-sm">
   <div class="container">
     <ul class="nav justify-content-between text-white fw-semibold">
+
       <li class="nav-item">
-        <a class="nav-link text-white" href="/mlstudio/">Informacje</a>
+        <a class="nav-link {% if request.path == '/mlstudio/' %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/">
+          Informacje
+        </a>
       </li>
+
       <li class="nav-item">
-        <a class="nav-link text-white" href="/mlstudio/preprocess">PreProcessing</a>
+        <a class="nav-link {% if '/mlstudio/preprocess' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/preprocess">
+          Preprocessing
+        </a>
       </li>
+
       <li class="nav-item">
-        <a class="nav-link text-white" href="/mlstudio/models">Modele</a>
+        <a class="nav-link {% if '/mlstudio/models' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/models">
+          Modele
+        </a>
       </li>
+
       <li class="nav-item">
-        <a class="nav-link text-white" href="/mlstudio/run">Uruchom</a>
+        <a class="nav-link {% if '/mlstudio/run' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/run">
+          Uruchom
+        </a>
       </li>
+
       <li class="nav-item">
-        <a class="nav-link text-white" href="/mlstudio/visualize">Wizualizacja</a>
+        <a class="nav-link {% if '/mlstudio/visualize' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/visualize">
+          Wizualizacja
+        </a>
       </li>
+
     </ul>
   </div>
 </div>
