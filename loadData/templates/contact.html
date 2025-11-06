@@ -9,9 +9,9 @@
   <h2>Kontakt - zgłoś błąd na stronie</h2>
   <p>Masz pytania lub znalazłeś błąd? Wypełnij formularz, aby wysłać wiadomość:</p>
 
-  {% if success %}
-    <div class="alert alert-success">Wiadomość NIE została wysłana, ponieważ serwer nie został skonfigurowany! Skontaktuj się z administratorem</div>
-  {% endif %}
+    {% if success %}
+    <div class="alert alert-success">Dziękujemy! Twoja wiadomość została wysłana.</div>
+    {% endif %}
 
   {% if error %}
     <div class="alert alert-danger">{{ error }}</div>

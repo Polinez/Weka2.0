@@ -4,10 +4,11 @@ import pandas as pd
 import io
 from django.db import IntegrityError  # Correct import for catching integrity errors
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 import mimetypes
 
 from django.contrib import messages
+from django.conf import settings
 
 
 def validate_csv_file(uploaded_file):
@@ -136,33 +137,42 @@ def delete_dataset(request, dataset_id):
 
 # Simple view to render a contact page
 def contact(request):
-    return render(request, "contact.html")
+    context = {}
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email_from_user = request.POST.get('email')
+        message = request.POST.get('message')
+
+        if name and email_from_user and message:
+            try:
+                full_message = f"""
+                Nowa wiadomość ze strony AI Analyzer:
+
+                Od: {name}
+                Email zwrotny: {email_from_user}
+
+                Treść wiadomości:
+                {message}
+                """
+
+                subject = f'Błąd na stronie od {name}'
+
+                email = EmailMessage(subject,full_message,settings.EMAIL_HOST_USER,['sebastian.wandzel@uekat.edu.pl'],reply_to=[email_from_user])
+                email.send()
+
+                context['success'] = True
+
+            except Exception as e:
+                # Dobra praktyka: logowanie błędu
+                print(f"BŁĄD WYSYŁANIA EMAILA: {e}")
+                context['error'] = 'Nie udało się wysłać wiadomości. Spróbuj później.'
+        else:
+            context['error'] = 'Wypełnij wszystkie pola.'
+
+    return render(request, 'contact.html', context)
 
 # Simple view to render an about page
 def about(request):
     return render(request, "about.html")
 
 
-# send report mail
-def contact_view(request):
-    context = {}
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        message = request.POST.get('message')
-
-        if name and email and message:
-            try:
-                send_mail(
-                    f'Błąd na stronie od {name}',
-                    message,
-                    email,
-                    ['sebastian.wandzel@uekat.edu.pl'],
-                )
-                context['success'] = True
-            except Exception as e:
-                context['error'] = 'Nie udało się wysłać wiadomości. Spróbuj później.'
-        else:
-            context['error'] = 'Wypełnij wszystkie pola.'
-
-    return render(request, 'contact.html', context)

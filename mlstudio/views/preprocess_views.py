@@ -99,6 +99,10 @@ def preprocess_apply(request):
     if request.method != 'POST':
         return redirect('mlstudio:preprocess')
 
+    dataset = load_data_from_session(request)
+    if not isinstance(dataset, Dataset):
+        return dataset
+
     working_data = request.session.get('working_data')
     selected_feature = request.session.get('selected_feature')
 
@@ -166,6 +170,18 @@ def preprocess_apply(request):
                 scaler = MinMaxScaler()
                 df[[selected_feature]] = scaler.fit_transform(df[[selected_feature]])
             history_entry = f"Zastosowano '{pol_names.get(method, method)}' na kolumnie '{selected_feature}'"
+
+        elif operation == 'delete':
+            if selected_feature == dataset.target_column:
+                messages.error(request,
+                               f"Nie można usunąć kolumny '{selected_feature}', ponieważ jest ona ustawiona jako kolumna docelowa.")
+                return redirect('mlstudio:preprocess')
+            else:
+                df.drop(columns=[selected_feature], inplace=True)
+                history_entry = f"Usunięto kolumnę: '{selected_feature}'"
+
+                # Clear selected feature from session
+                request.session['selected_feature'] = None
 
         else:
             messages.warning(request, "Nieznana operacja.")
