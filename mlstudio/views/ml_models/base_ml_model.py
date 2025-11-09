@@ -191,11 +191,16 @@ class BaseDimensionalityReduction(BaseMLModel):
     def evaluate_model(self, X_transformed):
         """Evaluation for dimensionality reduction: variance explained and size comparison."""
 
+        explained_variance_ratio_ = self.model.explained_variance_ratio_
+        total_explained_variance = sum(explained_variance_ratio_)
 
         return {
             "model_type": "Dimensionality Reduction",
             "original_features": self.X_train.shape[1] if self.X_train is not None else 0,
             "reduced_features": X_transformed.shape[1] if X_transformed is not None else 0,
-            # Return a small sample of the transformed data
+            # Sum of explained variance ratios
+            "total_explained_variance": total_explained_variance,
+            "explained_variance_per_component": explained_variance_ratio_.tolist(),
+            # retuns a sample of transformed data
             "transformed_data_sample": X_transformed[:5].tolist() if X_transformed is not None else []
         }

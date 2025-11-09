@@ -90,11 +90,21 @@ def get_plot(dataFrame, columns: list = None):
 # plots for Visualizations in ML Model Results
 def plot_to_base64(fig):
     """Converts figure Matplotlib to string Base64 for HTML."""
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight')
-    plt.close(fig)
-    data = base64.b64encode(buf.getvalue()).decode('utf-8')
-    return data
+    try:
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+
+        img_str = base64.b64encode(buf.getvalue()).decode('utf-8')
+        return img_str
+
+    except Exception as e:
+        print(f"Błąd podczas konwersji wykresu na Base64: {e}")
+        return None
+
+    finally:
+        if fig:
+            plt.close(fig)
 
 
 def generate_classification_plots(result_data, df, target_column):

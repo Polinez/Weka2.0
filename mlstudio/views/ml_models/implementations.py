@@ -117,7 +117,25 @@ class KNNClassifierModel(BaseClassificationModel):
                 plot_model = clone(self.model)
                 plot_model.fit(X_plot, y_numeric)
 
-                h = .02
+                PLOT_SAMPLE_SIZE = 1000
+
+                if len(y_numeric) > PLOT_SAMPLE_SIZE:
+                    try:
+                        from sklearn.model_selection import train_test_split
+                        X_plot_sample, _, y_numeric_sample, _ = train_test_split(
+                            X_plot, y_numeric,
+                            train_size=PLOT_SAMPLE_SIZE,
+                            stratify=y_numeric
+                        )
+                    except ValueError:
+                        indices = np.random.choice(len(y_numeric), PLOT_SAMPLE_SIZE, replace=False)
+                        X_plot_sample = X_plot[indices]
+                        y_numeric_sample = y_numeric[indices]
+                else:
+                    X_plot_sample = X_plot
+                    y_numeric_sample = y_numeric
+
+                h = .15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
                 y_min, y_max = X_plot[:, 1].min() - 1, X_plot[:, 1].max() + 1
                 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
@@ -198,7 +216,25 @@ class SVCModel(BaseClassificationModel):
                 plot_model = clone(self.model)
                 plot_model.fit(X_plot, y_numeric)
 
-                h = .02
+                PLOT_SAMPLE_SIZE = 1000
+
+                if len(y_numeric) > PLOT_SAMPLE_SIZE:
+                    try:
+                        from sklearn.model_selection import train_test_split
+                        X_plot_sample, _, y_numeric_sample, _ = train_test_split(
+                            X_plot, y_numeric,
+                            train_size=PLOT_SAMPLE_SIZE,
+                            stratify=y_numeric
+                        )
+                    except ValueError:
+                        indices = np.random.choice(len(y_numeric), PLOT_SAMPLE_SIZE, replace=False)
+                        X_plot_sample = X_plot[indices]
+                        y_numeric_sample = y_numeric[indices]
+                else:
+                    X_plot_sample = X_plot
+                    y_numeric_sample = y_numeric
+
+                h = .15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
                 y_min, y_max = X_plot[:, 1].min() - 1, X_plot[:, 1].max() + 1
                 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
@@ -488,37 +524,44 @@ class PCAModel(BaseDimensionalityReduction):
         evaluation = super().evaluate_model(X_transformed)
 
         try:
+            # === 1.  Scree Plot ===
 
-            full_pca = PCA(n_components=None)
-            full_pca.fit(self.X_train)
+            n_comp_param = self.model_parameters.get('n_components')
 
-            # 1. Scree Plot
+            # check if we need to fit a full PCA model for scree plot when n_components is set
+            if n_comp_param is None:
+                full_pca_model = self.model
+            else:
+                full_pca_model = PCA(n_components=None)
+                full_pca_model.fit(self.X_train)
+
             fig_scree, ax_scree = plt.subplots(figsize=(10, 6))
-            num_components = len(full_pca.explained_variance_ratio_)
+            num_components = len(full_pca_model.explained_variance_ratio_)
             components = np.arange(1, num_components + 1)
 
-            ax_scree.plot(components, full_pca.explained_variance_ratio_, marker='o', linestyle='--')
+            ax_scree.plot(components, full_pca_model.explained_variance_ratio_, marker='o', linestyle='--')
             ax_scree.set_xlabel('Główna Składowa')
             ax_scree.set_ylabel('Wyjaśniona Wariancja')
             ax_scree.set_title('Wykres Spadków Wariancji (Scree Plot)')
             ax_scree.grid(True)
             evaluation['plot_pca_scree'] = plot_to_base64(fig_scree)
 
-            # 2. Biplot (if n_components = 2)
-            actual_n_components = self.model.n_components_ if hasattr(self.model, 'n_components_') else None
+            # === 2. Biplotu ===
 
-            if (actual_n_components == 2) or (self.model_parameters.get('n_components') is None and self.X_train.shape[1] == 2):
+            actual_n_components = self.model.n_components_
+
+            if actual_n_components == 2:
 
                 fig_biplot, ax_biplot = plt.subplots(figsize=(12, 10))
 
-                X_reduced_2d = self.model.fit_transform(self.X_train)
+                X_reduced_2d = self.model.transform(self.X_train)
 
                 sns.scatterplot(
                     x=X_reduced_2d[:, 0],
                     y=X_reduced_2d[:, 1],
                     ax=ax_biplot,
                     alpha=0.6,
-                    label='Zredukowane Dane'
+                    label='Zredukowane Dane Treningowe'
                 )
 
                 feature_vectors = self.model.components_.T * np.sqrt(self.model.explained_variance_)
