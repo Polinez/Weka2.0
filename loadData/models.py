@@ -21,6 +21,8 @@ class Dataset(models.Model):
         null=True, # can be null for datasets without specified learning type
         blank=True
     )
+    test_size = models.FloatField(null=True, blank=True)
+    random_state = models.IntegerField(null=True, blank=True)
 
     # one user can not have two datasets with the same name
     class Meta:

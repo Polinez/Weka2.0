@@ -28,11 +28,17 @@
         <div class="col-md-4 mb-4 ">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="card-title"><strong>Nazwa:</strong> {{ dataset.name }}</h5>
-              <p class="card-text">Typ zadania ML: {{ dataset.learning_type }}</p>
-              <p class="card-text">Kolumna decyzyjna: {{ dataset.target_column }}</p>
-              <p class="card-text"><strong>Opis:</strong> {{ dataset }}</p>
+              <h5 class="card-title mb-3"><strong>{{ dataset.name }}</strong></h5>
+
+              <p class="mb-1"><strong>Typ ML:</strong> {{ dataset.learning_type|default:"-" }}</p>
+              <p class="mb-1"><strong>Kolumna decyzyjna:</strong> {{ dataset.target_column|default:"-" }}</p>
+              <p class="mb-1"><strong>Test size:</strong> {{ dataset.test_size|default:"0.2" }}</p>
+              <p class="mb-1"><strong>Random seed:</strong> {{ dataset.random_state|default:"42" }}</p>
+
+              <p class="card-text mt-2"><strong>Opis:</strong> {{ dataset }}</p>
             </div>
+
+
 
             <div class="card-footer d-flex justify-content-between">
                 {% if dataset.learning_type %}
