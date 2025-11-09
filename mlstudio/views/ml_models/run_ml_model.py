@@ -21,17 +21,17 @@ MODEL_MAPPING = {
 
     # Regression Models
     "Regresja Liniowa": LinearRegressionModel,
-    "Drzewo decyzyjne (Regresja)": DecisionTreeRegressorModel,  # Pełna nazwa z UI
-    "Lasy Losowe (Regresja)": RandomForestRegressorModel,  # Pełna nazwa z UI
-    "Maszyna wektorów nosnych (SVM) (Regresja)": SVRModel,  # SVR
+    "Drzewo decyzyjne (Regresja)": DecisionTreeRegressorModel,
+    "Lasy Losowe (Regresja)": RandomForestRegressorModel,
+    "Maszyna wektorów nosnych (SVM) (Regresja)": SVRModel,
 
     # Classification Models
     "Regresja Logistyczna": LogisticRegressionModel,
-    "Drzewo decyzyjne (Klasyfikacja)": DecisionTreeClassificationModel,  # Pełna nazwa z UI
-    "K-najblizszych sasiadów (KNN)": KNNClassifierModel,  # Pełna nazwa z UI
+    "Drzewo decyzyjne (Klasyfikacja)": DecisionTreeClassificationModel,
+    "K-najblizszych sasiadów (KNN)": KNNClassifierModel,
     "Naiwny Klasyfikator Bayesa": NaiveBayesModel,
-    "Lasy Losowe (Klasyfikacja)": RandomForestClassifierModel,  # Pełna nazwa z UI
-    "Maszyna wektorów nosnych (SVM) (Klasyfikacja)": SVCModel,  # SVC
+    "Lasy Losowe (Klasyfikacja)": RandomForestClassifierModel,
+    "Maszyna wektorów nosnych (SVM) (Klasyfikacja)": SVCModel,
 
     # Cluster Models
     "K-Średnich (K-Means)": KMeansModel,

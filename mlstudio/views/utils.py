@@ -106,7 +106,38 @@ def generate_classification_plots(result_data, df, target_column):
     y_test = result_data.get('y_test')
     y_pred = result_data.get('y_pred')
 
-    # 1. Confusion Matrix
+    accuracy = result_data.get('accuracy')
+    f1 = result_data.get('f1')
+
+    # 1. Accuracy vs F1 Score Bar Plot
+    if accuracy is not None and f1 is not None:
+        try:
+            metric_names = ['Accuracy', 'F1 Score']
+            metric_values = [accuracy, f1]
+
+            fig, ax = plt.subplots()
+
+            sns.barplot(x=metric_names, y=metric_values, ax=ax)
+
+            ax.set_xlabel('Metryka')
+            ax.set_ylabel('Wartość')
+            ax.set_title('Porównanie Metryk: Accuracy vs F1 Score')
+
+            ax.set_ylim(0, 1.1)
+
+            for p in ax.patches:
+                ax.annotate(f'{p.get_height():.3f}',
+                            (p.get_x() + p.get_width() / 2., p.get_height()),
+                            ha='center', va='center',
+                            xytext=(0, 9),
+                            textcoords='offset points')
+
+            plots.append(plot_to_base64(fig))
+
+        except Exception as e:
+            print(f"Błąd rysowania wykresu metryk (Accuracy/F1): {e}")
+
+    # 2. Confusion Matrix
     if y_test and y_pred:
         try:
             cm = confusion_matrix(y_test, y_pred)
@@ -120,6 +151,35 @@ def generate_classification_plots(result_data, df, target_column):
         except Exception as e:
             print(f"Błąd rysowania macierzy pomyłek: {e}")
 
+        # 3. Bar Plot of Predicted Class Counts
+        try:
+            pred_counts = pd.Series(y_pred).value_counts()
+
+            fig, ax = plt.subplots()
+            sns.barplot(x=pred_counts.index, y=pred_counts.values, ax=ax, order=pred_counts.index)
+
+            ax.set_xlabel('Przewidziana Klasa')
+            ax.set_ylabel('Liczba Obserwacji')
+            ax.set_title('Liczba Obserwacji Przewidzianych dla Każdej Klasy')
+
+            # Annotate bars with counts
+            for p in ax.patches:
+                ax.annotate(f'{int(p.get_height())}',
+                            (p.get_x() + p.get_width() / 2., p.get_height()),
+                            ha='center', va='center',
+                            xytext=(0, 9),
+                            textcoords='offset points')
+
+            # Adjust y-axis limit for better visibility of annotations
+            ax.set_ylim(top=ax.get_ylim()[1] * 1.1)
+
+            if len(pred_counts) > 5:
+                ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+            plots.append(plot_to_base64(fig))
+        except Exception as e:
+            print(f"Błąd rysowania wykresu słupkowego predykcji: {e}")
+
     return plots
 
 
@@ -132,7 +192,65 @@ def generate_regression_plots(result_data, df, target_column):
     y_test = result_data.get('y_test')
     y_pred = result_data.get('y_pred')
 
-    # 1. Plot of Actual vs Predicted
+    mae = result_data.get('mean_absolute_error')
+    mse = result_data.get('mean_squared_error')
+    r2 = result_data.get('r2_score')
+
+
+    # 1. MAE and MSE Bar Plot
+    if mae is not None and mse is not None:
+        try:
+            metric_names = ['MAE (Śr. Błąd Abs.)', 'MSE (Błąd Kwadrat.)']
+            metric_values = [mae, mse]
+
+            fig, ax = plt.subplots()
+            sns.barplot(x=metric_names, y=metric_values, ax=ax)
+            ax.set_title('Porównanie Błędów Modelu (Im niżej, tym lepiej)')
+            ax.set_ylabel('Wartość błędu')
+
+            # Dodaj adnotacje (wartości) nad słupkami
+            for p in ax.patches:
+                ax.annotate(f'{p.get_height():.3f}',
+                            (p.get_x() + p.get_width() / 2., p.get_height()),
+                            ha='center', va='center',
+                            xytext=(0, 9),
+                            textcoords='offset points')
+
+            # Zwiększ limit osi Y, aby etykiety się zmieściły
+            ax.set_ylim(top=ax.get_ylim()[1] * 1.1)
+            plots.append(plot_to_base64(fig))
+
+        except Exception as e:
+            print(f"Błąd rysowania wykresu błędów (MAE/MSE): {e}")
+
+    # 2. R-squared (R2) Bar Plot
+    if r2 is not None:
+        try:
+            fig, ax = plt.subplots()
+            sns.barplot(x=['R-squared (R2)'], y=[r2], ax=ax)
+            ax.set_title('Współczynnik Determinacji (Im wyżej, tym lepiej)')
+            ax.set_ylabel('Wartość R2')
+
+            # Ustaw limity osi Y (R2 jest zwykle w [0, 1], ale może być ujemny)
+            if r2 > 0:
+                ax.set_ylim(0, max(1.1, r2 * 1.1))
+            else:
+                ax.set_ylim(min(-0.1, r2 * 1.2), 0.1)  # Zakres dla ujemnego R2
+
+            # Dodaj adnotacje
+            for p in ax.patches:
+                ax.annotate(f'{p.get_height():.3f}',
+                            (p.get_x() + p.get_width() / 2., p.get_height()),
+                            ha='center', va='center',
+                            xytext=(0, 9),
+                            textcoords='offset points')
+
+            plots.append(plot_to_base64(fig))
+
+        except Exception as e:
+            print(f"Błąd rysowania wykresu R2: {e}")
+
+    # 3. Plot of Actual vs Predicted
     if y_test and y_pred:
         try:
             fig, ax = plt.subplots()
@@ -189,25 +307,5 @@ def generate_clustering_plots(result_data, df, target_column):
 
 
 def generate_dim_reduction_plots(result_data, df, target_column):
-    """
-    Generates visualizations for DIMENSIONALITY REDUCTION.
-    Returns a list of Base64 strings
-    """
     plots = []
-    variance_ratio = result_data.get('explained_variance_ratio')
-
-    if variance_ratio:
-        try:
-            # 1. Plot of explained variance ratio
-            fig, ax = plt.subplots()
-            ax.bar(range(1, len(variance_ratio) + 1), variance_ratio, alpha=0.5, align='center', label='Indywidualna wariancja')
-            ax.step(range(1, len(variance_ratio) + 1), np.cumsum(variance_ratio), where='mid', label='Skumulowana wariancja')
-            ax.set_xlabel('Główne składowe')
-            ax.set_ylabel('Współczynnik wyjaśnionej wariancji')
-            ax.set_title('Wykres wariancji (PCA)')
-            ax.legend(loc='best')
-            plots.append(plot_to_base64(fig))
-        except Exception as e:
-            print(f"Błąd rysowania wykresu PCA: {e}")
-
     return plots

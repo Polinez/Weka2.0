@@ -97,14 +97,25 @@
 
                         <div class="list-group list-group-flush">
                             {% for run in runs %}
-                                <a href="?run_id={{ run.id }}"
-                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
+                                <div class="list-group-item d-flex justify-content-between align-items-center
                                         {% if selected_run and selected_run.id == run.id %}active{% endif %}">
 
-                                    <strong>Uruchomienie {{ forloop.revcounter }}</strong>
+                                    <a href="?run_id={{ run.id }}" class="text-decoration-none text-dark flex-grow-1 me-2">
+                                        <strong>Uruchomienie {{ forloop.revcounter }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ run.created_at|date:"Y-m-d H:i" }}</small>
+                                    </a>
 
-                                    <small class="text-muted">{{ run.created_at|date:"Y-m-d H:i" }}</small>
-                                </a>
+                                    <form method="post" action="{% url 'mlstudio:delete_run' %}" class="mb-0">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="run_to_delete" value="{{ run.id }}">
+
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Czy na pewno chcesz usunąć ten przebieg? Tej operacji nie można cofnąć.');">
+                                            &times; </button>
+                                    </form>
+
+                                </div>
                             {% empty %}
                                 <div class="list-group-item">
                                     Brak uruchomień

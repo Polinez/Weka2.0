@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score, silhouette_score, davies_bouldin_score, f1_score
+from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score, silhouette_score, davies_bouldin_score, f1_score, mean_absolute_error
 import json
 
 class BaseMLModel(ABC):
@@ -110,9 +110,11 @@ class BaseRegressionModel(BaseMLModel):
     def evaluate_model(self, y_pred):
         """Evaluation specific for regression: MSE and R2 score."""
         mse = mean_squared_error(self.y_test, y_pred)
+        mae = mean_absolute_error(self.y_test, y_pred)
         r2 = r2_score(self.y_test, y_pred)
         return {
             "model_type": "Regression",
+            "mean_absolute_error": mae,
             "mean_squared_error": mse,
             "r2_score": r2,
             "y_test": self.y_test.tolist(),
@@ -189,14 +191,11 @@ class BaseDimensionalityReduction(BaseMLModel):
     def evaluate_model(self, X_transformed):
         """Evaluation for dimensionality reduction: variance explained and size comparison."""
 
-        # PCA-specific attributes after fitting
-        explained_variance_ratio = getattr(self.model, 'explained_variance_ratio_', None)
 
         return {
             "model_type": "Dimensionality Reduction",
             "original_features": self.X_train.shape[1] if self.X_train is not None else 0,
             "reduced_features": X_transformed.shape[1] if X_transformed is not None else 0,
-            "explained_variance_ratio": explained_variance_ratio.tolist() if explained_variance_ratio is not None else None,
             # Return a small sample of the transformed data
             "transformed_data_sample": X_transformed[:5].tolist() if X_transformed is not None else []
         }

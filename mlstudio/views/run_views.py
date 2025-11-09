@@ -12,6 +12,9 @@ from ..models import DatasetModelState, MLRun
 
 from mlstudio.views.ml_models.run_ml_model import run_ml_model
 
+# delete run view
+from django.views.decorators.http import require_POST
+
 
 @login_required()
 def run_model(request):
@@ -84,3 +87,29 @@ def run_model(request):
         "displayed_common_params": displayed_common_params,
         "displayed_model_params": displayed_model_params,
     })
+
+
+@login_required
+@require_POST
+def delete_run(request):
+    try:
+        run_id_to_delete = request.POST.get('run_to_delete')
+
+        if not run_id_to_delete:
+            messages.error(request, "Nie podano ID przebiegu do usunięcia.")
+            return redirect('mlstudio:run_model')
+
+        run_to_delete = get_object_or_404(
+            MLRun,
+            id=run_id_to_delete,
+            user=request.user
+        )
+
+        run_to_delete.delete()
+
+        messages.success(request, f"Pomyślnie usunięto przebieg.")
+
+    except Exception as e:
+        messages.error(request, f"Wystąpił błąd podczas usuwania przebiegu: {e}")
+
+    return redirect('mlstudio:run_model')

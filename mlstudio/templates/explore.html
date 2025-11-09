@@ -94,39 +94,7 @@
     </div>
 
 
-
-    <!-- Window 3 -->
-        <div class="card shadow-sm flex-fill mb-3">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Statystyki</h5>
-
-                <div class="bg-white scrollable-content" >
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                  {% for col in stat_columns %}
-                                    <th>{{ col }}</th>
-                                  {% endfor %}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {% for row in statistics %}
-                                  <tr>
-                                    {% for value in row %}
-                                      <td>{{ value }}</td>
-                                    {% endfor %}
-                                  </tr>
-                                {% endfor %}
-                              </tbody>
-                        </table>
-                    </div>
-
-            </div>
-        </div>
-
-
-
-    <!-- Window 4 -->
+    <!-- Window 3-->
         <div class="card shadow-sm flex-fill mb-3">
             <div class="card-body">
                 <h5 class="card-title mb-3">Wizualizacja danych</h5>
@@ -151,6 +119,35 @@
                         </tbody>
                     </table>
                 </div>
+
+            </div>
+        </div>
+
+    <!-- Window 4 -->
+        <div class="card shadow-sm flex-fill mb-3">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Statystyki</h5>
+
+                <div class="bg-white scrollable-content" >
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                  {% for col in stat_columns %}
+                                    <th>{{ col }}</th>
+                                  {% endfor %}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for row in statistics %}
+                                  <tr>
+                                    {% for value in row %}
+                                      <td>{{ value }}</td>
+                                    {% endfor %}
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                        </table>
+                    </div>
 
             </div>
         </div>
