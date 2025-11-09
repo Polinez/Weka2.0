@@ -10,6 +10,7 @@ import mimetypes
 from django.contrib import messages
 from django.conf import settings
 
+from sklearn.model_selection import train_test_split
 
 def validate_csv_file(uploaded_file):
     """
@@ -83,9 +84,27 @@ def set_target(request, dataset_id):
     columns = list(df.columns)
     error = None
 
+    default_test_size = 0.2
+    default_random_state = 42
+
     if request.method == "POST":
         learning_type = request.POST.get("learning_type") or 'CLASSIFICATION'
         target_col = request.POST.get("target_column")
+
+        try:
+            test_size_str = request.POST.get("test_size", str(default_test_size))
+            test_size = float(test_size_str)
+            if not (0.1 <= test_size <= 0.9):
+                raise ValueError("Proporcja zbioru testowego musi być między 0.1 a 0.9.")
+
+            random_state_str = request.POST.get("random_state", str(default_random_state))
+            random_state = int(random_state_str)
+
+            default_test_size = test_size
+            default_random_state = random_state
+
+        except ValueError as e:
+            error = f"Nieprawidłowe parametry podziału: {e}"
 
         # Validation logic
         if learning_type in ['REGRESSION', 'CLASSIFICATION']:
@@ -98,20 +117,55 @@ def set_target(request, dataset_id):
 
         elif learning_type in ['CLUSTERING', 'DIM_REDUCTION']:
             dataset.target_column = None
+            target_col = None
 
 
         # Save if no errors
         if not error:
             dataset.learning_type = learning_type
             dataset.save()
-            messages.success(request, "Konfiguracja zadania została zapisana.")
-            return redirect("loadData:load_data")
+            try:
+                # 1. check if stratification is needed
+                stratify_col = None
+                if learning_type == 'CLASSIFICATION' and target_col:
+                    if df[target_col].nunique() > 1:
+                        stratify_col = df[target_col]
+                    else:
+                        messages.warning(request,f"Nie można wykonać stratyfikacji: kolumna '{target_col}' ma tylko jedną unikalną wartość.")
+
+                train_df, test_df = train_test_split(df,test_size=test_size,  random_state=random_state,  stratify=stratify_col)
+
+                train_csv = train_df.to_csv(index=False)
+                test_csv = test_df.to_csv(index=False)
+
+                request.session['train_data'] = train_csv
+                request.session['test_data'] = test_csv
+
+                # copy for reset purposes
+                request.session['original_train_data'] = train_csv
+                request.session['original_test_data'] = test_csv
+
+                request.session['original_data'] = dataset.data
+                request.session['dataset_id_for_data'] = dataset.id
+                request.session['dataset_id'] = dataset.id
+
+                request.session['preprocessing_history'] = []
+                request.session['selected_feature'] = None
+
+                messages.success(request,f"Konfiguracja zapisana. Dane podzielone na zbiór treningowy ({len(train_df)} wierszy) i testowy ({len(test_df)} wierszy).")
+
+                return redirect("loadData:load_data")
+
+            except Exception as e:
+                error = f"Błąd podczas podziału danych: {e}"
 
     context = {
         "dataset": dataset,
         "columns": columns,
         "learning_type_choices": LEARNING_TYPE_CHOICES,
-        "error": error
+        "error": error,
+        "default_test_size": default_test_size,
+        "default_random_state": default_random_state
     }
     return render(request, "decisionColumn.html", context)
 

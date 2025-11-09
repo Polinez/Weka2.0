@@ -1,4 +1,6 @@
 import pandas as pd
+import io
+from django.contrib import messages
 
 from mlstudio.views.ml_models.implementations import (
     LogisticRegressionModel,
@@ -41,7 +43,7 @@ MODEL_MAPPING = {
     "Redukcja Wymiarowości (PCA)": PCAModel,
 }
 
-def run_ml_model(df:pd.DataFrame, model_name:str, target_column:str, common_parameters:dict, model_parameters:dict):
+def run_ml_model(df_train:pd.DataFrame, df_test:pd.DataFrame, model_name:str, target_column:str, common_parameters:dict, model_parameters:dict):
     """
         Function to run a machine learning model on a given dataset.
         finds the appropriate model class based on modelName,
@@ -60,7 +62,7 @@ def run_ml_model(df:pd.DataFrame, model_name:str, target_column:str, common_para
         )
 
         # evaluate model
-        evaluation_result = ml_model_instance.run(df)
+        evaluation_result = ml_model_instance.run(df_train, df_test)
 
         return evaluation_result
 

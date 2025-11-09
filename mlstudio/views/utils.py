@@ -15,19 +15,27 @@ from loadData.models import Dataset
 
 def load_data_from_session(request):
     dataset_id = request.session.get('dataset_id')  # Retrieve dataset_id from session
-
     if not dataset_id:
         messages.error(request, "Nie wybrano datasetu. Wybierz dataset lub załaduj nowy.")
         return redirect("loadData:load_data")
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
 
-    # check if dataset not in session
-    working_data = request.session.get('working_data')
+    train_data = request.session.get('train_data')
     session_dataset_id = request.session.get('dataset_id_for_data')
 
-    if working_data and session_dataset_id == dataset.id:
-        dataset.data = working_data
+    # check if dataset not in session
+    if train_data and session_dataset_id == dataset.id:
+        dataset.data = train_data
+
+    elif not train_data and session_dataset_id == dataset.id:
+        messages.warning(request, "Brak podzielonych danych w sesji. Proszę ponownie skonfigurować zadanie.")
+        return redirect("loadData:set_target", dataset_id=dataset.id)
+
+    elif session_dataset_id != dataset.id:
+        messages.info(request, "Zmieniono aktywny dataset. Proszę skonfigurować zadanie, aby dokonać podziału danych.")
+        return redirect("loadData:set_target", dataset_id=dataset.id)
+
 
     return dataset
 

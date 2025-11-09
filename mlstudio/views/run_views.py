@@ -54,14 +54,21 @@ def run_model(request):
 
     # run model button clicked
     if request.method == "POST" and "run_model" in request.POST:
-        # get pre-processed data if it is
-        working_data_csv = request.session.get('working_data', dataset.data)
 
-        df = pd.read_csv(io.StringIO(working_data_csv))
+        train_data_csv = request.session.get('train_data')
+        test_data_csv = request.session.get('test_data')
+
+        if not train_data_csv or not test_data_csv:
+            messages.error(request,"Brak danych treningowych lub testowych w sesji. Nie można uruchomić modelu. Proszę ponownie skonfigurować zadanie.")
+            return redirect("loadData:set_target", dataset_id=dataset.id)
+
+        df_train = pd.read_csv(io.StringIO(train_data_csv))
+        df_test = pd.read_csv(io.StringIO(test_data_csv))
 
         # run model with current parameters
         result = run_ml_model(
-            df,
+            df_train,
+            df_test,
             state.model.name,
             dataset.target_column,
             state.default_parameters,

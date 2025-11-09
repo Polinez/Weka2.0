@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, mean_squared_error, r2_score, silhouette_score, davies_bouldin_score, f1_score, mean_absolute_error
 import json
 
@@ -18,30 +17,22 @@ class BaseMLModel(ABC):
         self.y_test = None
         self.X = None # for unsupervised models
 
-    def prepare_data(self, df):
-        test_size_str = self.common_parameters.get("test_size")
-        random_state_str = self.common_parameters.get("random_state")
-
-        try:
-            test_size = float(test_size_str)
-            random_state = int(random_state_str)
-        except (ValueError, TypeError):
-            test_size = 0.2
-            random_state = 42
-            print("Invalid common parameters for data splitting. Using default values.")
-
-        # split data into train and test sets based on supervised and unsupervised
+    def prepare_data(self, df_train, df_test):
         if self.target_column:
-            # Classification and Regression
-            X = df.drop(columns=[self.target_column])
-            y = df[self.target_column]
-            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=test_size, random_state=random_state
-            )
+            if self.target_column not in df_train.columns or self.target_column not in df_test.columns:
+                raise ValueError(f"Kolumna docelowa '{self.target_column}' nie została znaleziona w danych.")
+
+            self.X_train = df_train.drop(columns=[self.target_column])
+            self.y_train = df_train[self.target_column]
+            self.X_test = df_test.drop(columns=[self.target_column])
+            self.y_test = df_test[self.target_column]
+
         else:
-            # Unsupervised models (e.g., Clustering, PCA)
-            self.X = df
-            self.X_train = df
+            self.X_train = df_train
+            self.X_test = df_test
             self.y_train = None
+            self.y_test = None
+            self.X = pd.concat([df_train, df_test], ignore_index=True)
 
 
     @abstractmethod
@@ -60,8 +51,8 @@ class BaseMLModel(ABC):
     def evaluate_model(self, y_pred):
         pass
 
-    def run(self, df):
-        self.prepare_data(df)
+    def run(self, df_train, df_test):
+        self.prepare_data(df_train, df_test)
         self.create_model()
         self.train_model()
         result = self.process_data()
@@ -128,10 +119,12 @@ class BaseUnsupervisedModel(BaseMLModel):
     def __init__(self, common_parameters: dict, model_parameters: dict, target_column: str = None):
         super().__init__(common_parameters, model_parameters, target_column=None)
 
-    def prepare_data(self, df):
-        self.X = df
-        self.X_train = df
+    def prepare_data(self, df_train):
+        self.X = df_train
+        self.X_train = df_train
         self.y_train = None
+        self.X_test = None
+        self.y_test = None
 
     def train_model(self):
         """Clustering models often perform fitting within the prediction step."""
@@ -139,7 +132,7 @@ class BaseUnsupervisedModel(BaseMLModel):
 
     def process_data(self):
         """Performs clustering (fit_predict) and returns labels for all samples X."""
-        return self.model.fit_predict(self.X)
+        return self.model.fit_predict(self.X_train)
 
     def evaluate_model(self, labels):
         """Evaluation for clustering: uses internal metrics like Silhouette and DB Index."""
@@ -164,6 +157,14 @@ class BaseUnsupervisedModel(BaseMLModel):
             "davies_bouldin_score": db_score
         }
 
+    def run(self, df_train, df_test):
+        self.prepare_data(df_train)
+        self.create_model()
+        self.train_model()
+        result = self.process_data()
+        evaluation = self.evaluate_model(result)
+        return evaluation
+
 
 class BaseDimensionalityReduction(BaseMLModel):
     """Base class for dimensionality reduction (e.g., PCA)."""
@@ -171,14 +172,6 @@ class BaseDimensionalityReduction(BaseMLModel):
     def __init__(self, common_parameters: dict, model_parameters: dict, target_column: str = None):
         super().__init__(common_parameters, model_parameters, target_column=None)
 
-    def prepare_data(self, df):
-        """Splits data X for fitting (training) and transforming (testing)."""
-        test_size = float(self.common_parameters.get("test_size", 0.2))
-        random_state = int(self.common_parameters.get("random_state", 42))
-
-        # Split X into train/test, as is standard practice before transformation
-        self.X_train, self.X_test = train_test_split(df, test_size=test_size, random_state=random_state)
-        self.X = df
 
     def train_model(self):
         """Trains the model by fitting it to the training data (X_train)."""
