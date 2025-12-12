@@ -45,3 +45,4 @@ build/
 dist/
 *.egg-info/
 pip
+/static_root/
