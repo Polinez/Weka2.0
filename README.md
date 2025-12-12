@@ -132,7 +132,3 @@ The application will be available at: `http://127.0.0.1:8000/`
 6.  **Results:** View performance metrics and generated plots.
 
 ---
-
-## 📄 License
-
-Project created for educational/development purposes.
