@@ -145,6 +145,7 @@ def set_target(request, dataset_id):
                 request.session.update({
                     'original_data': dataset.data,
                     'dataset_id': dataset.id,
+                    'dataset_id_for_data': dataset.id,
                     'preprocessing_history': [],
                     'selected_feature': None
                 })
