@@ -1,0 +1,51 @@
+name: Deploy to Raspberry Pi
+
+# Run this workflow on pushes to the production branch
+on:
+  push:
+    branches: [ "production" ]
+
+jobs:
+  deploy:
+    # Runung on a self-hosted runner (your Raspberry Pi)
+    runs-on: self-hosted
+
+    steps:
+    - name: 1. Update code on Raspberry Pi
+      run: |
+        # Go to the project directory
+        cd /home/sebastian/Weka20/strona
+        
+        # Download the latest code from GitHub
+        # Use --hard to overwrite any local changes
+        git fetch origin production
+        git reset --hard origin/production
+
+    - name: 2. Install dependencies pip packages
+      run: |
+        cd /home/sebastian/Weka20/strona
+        # Run in the virtual environment
+        source venv/bin/activate
+        
+        # Install any new dependencies from requirements.txt
+        pip install -r requirements.txt
+
+    - name: 3. Migrate database
+      run: |
+        cd /home/sebastian/Weka20/strona
+        source venv/bin/activate
+        
+        # run migrations to update the database schema
+        python manage.py migrate --noinput
+
+    - name: 4. Download static files
+      run: |
+        cd /home/sebastian/Weka20/strona
+        source venv/bin/activate
+        
+        # Clone static files to the static root
+        python manage.py collectstatic --noinput
+
+    - name: 5. Restart Gunicorn
+      run: |
+        sudo systemctl restart gunicorn_weka
