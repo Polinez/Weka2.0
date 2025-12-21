@@ -92,7 +92,7 @@
 
                                 <p class="alert alert-info">Wybrana cecha: <strong>{{ selected_feature_name }}</strong></p>
 
-                                {% if selected_feature_metadata.missing_count > 0 %}
+                                {% if selected_feature_metadata.missing_count > 0 and selected_feature_metadata.is_numeric %}
                                     <div class="mb-4 p-3 border rounded">
                                         <p class="text-muted text-start mb-3">
                                             Liczba pustych rekordów: <strong>{{ selected_feature_metadata.missing_count }}</strong>
@@ -100,15 +100,15 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <select name="imputation_method" class="form-select flex-grow-1">
                                                 <option selected value="">Wybierz metodę uzupełniania braków...</option>
-                                                {% if selected_feature_metadata.is_numeric %}
-                                                    <option value="mean">Średnia</option>
-                                                    <option value="median">Mediana</option>
-                                                {% endif %}
+                                                <option value="mean">Średnia</option>
+                                                <option value="median">Mediana</option>
                                                 <option value="mode">Najczęstsza wartość (dominanta)</option>
                                             </select>
                                             <button type="submit" name="apply_operation" value="impute" class="btn btn-success btn-sm flex-shrink-0">Zatwierdź</button>
                                         </div>
                                     </div>
+                                {% elif selected_feature_metadata.missing_count > 0 %}
+                                    {# Dla kolumn object z brakującymi wartościami - nic nie pokazujemy #}
                                 {% else %}
                                     <div class="mb-4 p-3 border rounded bg-light">
                                         <p class="text-muted text-start mb-0">Brak pustych rekordów.</p>

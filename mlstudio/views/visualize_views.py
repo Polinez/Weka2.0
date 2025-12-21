@@ -5,7 +5,6 @@ from ..models import MLRun
 from loadData.models import Dataset
 import pandas as pd
 import io
-import numpy as np
 
 from .utils import (
     generate_classification_plots,
@@ -13,6 +12,7 @@ from .utils import (
     generate_clustering_plots,
     generate_dim_reduction_plots
 )
+
 @login_required()
 def visualize(request):
     dataset = load_data_from_session(request)
@@ -27,26 +27,37 @@ def visualize(request):
             "error": "Nie znaleziono żadnych uruchomień modelu dla tego datasetu. Uruchom model w zakładce 'Run'."
         })
 
-    working_data_csv = request.session.get('working_data', dataset.data)
-    df = pd.read_csv(io.StringIO(working_data_csv))
-
     model_type = latest_run.model.model_type
-    result_data = latest_run.result
+    result_data = latest_run.result or {}
+
+    # Check if there was an error during model execution
+    if result_data.get('error'):
+        return render(request, "visualize.html", {
+            "dataset": dataset,
+            "error": f"Model nie został uruchomiony poprawnie: {result_data.get('error')}"
+        })
+
+    # Use train_data (contains preprocessed data) - for clustering it's all data, for others it's training set
+    train_data_csv = request.session.get('train_data')
+    if train_data_csv:
+        df = pd.read_csv(io.StringIO(train_data_csv))
+    else:
+        df = pd.read_csv(io.StringIO(dataset.data))
+
     plots = []
 
     try:
         if model_type == 'CLASSIFICATION':
-            plots = generate_classification_plots(result_data, df, dataset.target_column)
+            plots = generate_classification_plots(result_data, df, dataset.target_column) or []
         elif model_type == 'REGRESSION':
-            plots = generate_regression_plots(result_data, df, dataset.target_column)
+            plots = generate_regression_plots(result_data, df, dataset.target_column) or []
         elif model_type == 'CLUSTERING':
-            plots = generate_clustering_plots(result_data, df, dataset.target_column)
+            plots = generate_clustering_plots(result_data, df, dataset.target_column) or []
         elif model_type == 'DIM_REDUCTION':
-            plots = generate_dim_reduction_plots(result_data, df, dataset.target_column)
+            plots = generate_dim_reduction_plots(result_data, df, dataset.target_column) or []
 
         # add additional plots for every single model
         for key, value in result_data.items():
-            # Check if key begins with 'plot_' and value is not None
             if key.startswith('plot_') and value:
                 plots.append(value)
 

@@ -76,6 +76,28 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
             print(f"Błąd podczas rysowania drzewa decyzyjnego: {e}")
             evaluation['plot_tree_base64'] = None
 
+        # Feature Importance Plot
+        try:
+            feature_importance = self.model.feature_importances_
+            feature_names = self.X_train.columns.tolist()
+            
+            # Sort features by importance
+            indices = np.argsort(feature_importance)[::-1]
+            sorted_features = [feature_names[i] for i in indices]
+            sorted_importance = feature_importance[indices]
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
+            ax.set_xlabel('Ważność cechy')
+            ax.set_ylabel('Cecha')
+            ax.set_title('Ważność cech - Drzewo Decyzyjne (Klasyfikacja)')
+            ax.grid(axis='x', alpha=0.3)
+            
+            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+        except Exception as e:
+            print(f"Błąd podczas rysowania ważności cech: {e}")
+            evaluation['plot_feature_importance'] = None
+
         return evaluation
 
 
@@ -287,6 +309,39 @@ class RandomForestClassifierModel(BaseClassificationModel):
                 self.model_parameters['class_weight'] = None
         self.model = RandomForestClassifier(**self.model_parameters)
 
+    def evaluate_model(self, y_pred):
+        evaluation = super().evaluate_model(y_pred)
+
+        # Feature Importance Plot
+        try:
+            feature_importance = self.model.feature_importances_
+            feature_names = self.X_train.columns.tolist()
+            
+            # Sortuj według ważności
+            indices = np.argsort(feature_importance)[::-1]
+            sorted_features = [feature_names[i] for i in indices]
+            sorted_importance = feature_importance[indices]
+            
+            # limit the number of features to 20
+            max_features = 20
+            if len(sorted_features) > max_features:
+                sorted_features = sorted_features[:max_features]
+                sorted_importance = sorted_importance[:max_features]
+            
+            fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
+            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
+            ax.set_xlabel('Ważność cechy')
+            ax.set_ylabel('Cecha')
+            ax.set_title(f'Ważność cech - Lasy Losowe (Klasyfikacja, n_estimators={self.model.n_estimators})')
+            ax.grid(axis='x', alpha=0.3)
+            
+            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+        except Exception as e:
+            print(f"Błąd podczas rysowania ważności cech: {e}")
+            evaluation['plot_feature_importance'] = None
+
+        return evaluation
+
 
 # ===============================================
 # Regression Models (BaseRegressionModel)
@@ -326,6 +381,28 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
             print(f"Błąd podczas rysowania drzewa regresji: {e}")
             evaluation['plot_tree_base64'] = None
 
+        # Feature Importance Plot
+        try:
+            feature_importance = self.model.feature_importances_
+            feature_names = self.X_train.columns.tolist()
+            
+            # Sort features by importance
+            indices = np.argsort(feature_importance)[::-1]
+            sorted_features = [feature_names[i] for i in indices]
+            sorted_importance = feature_importance[indices]
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
+            ax.set_xlabel('Ważność cechy')
+            ax.set_ylabel('Cecha')
+            ax.set_title('Ważność cech - Drzewo Decyzyjne (Regresja)')
+            ax.grid(axis='x', alpha=0.3)
+            
+            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+        except Exception as e:
+            print(f"Błąd podczas rysowania ważności cech: {e}")
+            evaluation['plot_feature_importance'] = None
+
         return evaluation
 
 
@@ -335,6 +412,39 @@ class RandomForestRegressorModel(BaseRegressionModel):
         if self.model_parameters.get('max_depth') == 0:
             self.model_parameters['max_depth'] = None
         self.model = RandomForestRegressor(**self.model_parameters)
+
+    def evaluate_model(self, y_pred):
+        evaluation = super().evaluate_model(y_pred)
+
+        # Feature Importance Plot
+        try:
+            feature_importance = self.model.feature_importances_
+            feature_names = self.X_train.columns.tolist()
+            
+            # Sortuj według ważności
+            indices = np.argsort(feature_importance)[::-1]
+            sorted_features = [feature_names[i] for i in indices]
+            sorted_importance = feature_importance[indices]
+            
+            # Limit the number of features to 20
+            max_features = 20
+            if len(sorted_features) > max_features:
+                sorted_features = sorted_features[:max_features]
+                sorted_importance = sorted_importance[:max_features]
+            
+            fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
+            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
+            ax.set_xlabel('Ważność cechy')
+            ax.set_ylabel('Cecha')
+            ax.set_title(f'Ważność cech - Lasy Losowe (Regresja, n_estimators={self.model.n_estimators})')
+            ax.grid(axis='x', alpha=0.3)
+            
+            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+        except Exception as e:
+            print(f"Błąd podczas rysowania ważności cech: {e}")
+            evaluation['plot_feature_importance'] = None
+
+        return evaluation
 
 
 class SVRModel(BaseRegressionModel):
@@ -420,8 +530,39 @@ class KMeansModel(BaseUnsupervisedModel):
             print(f"Błąd podczas rysowania wizualizacji K-Means: {e}")
             evaluation['plot_kmeans_clusters'] = None
 
-        return evaluation
+        # Elbow Method Plot
+        try:
+            # Test different values of k (from 1 to min(10, number of samples))
+            max_k = min(10, len(self.X))
+            k_range = range(1, max_k + 1)
+            inertias = []
+            
+            for k in k_range:
+                kmeans = KMeans(n_clusters=k, random_state=self.model_parameters.get('random_state', 42), n_init=10)
+                kmeans.fit(self.X)
+                inertias.append(kmeans.inertia_)
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(k_range, inertias, marker='o', linestyle='--', linewidth=2, markersize=8)
+            ax.set_xlabel('Liczba klastrów (k)')
+            ax.set_ylabel('WCSS (Within-Cluster Sum of Squares)')
+            ax.set_title('Metoda Łokcia (Elbow Method) - Wybór optymalnej liczby klastrów')
+            ax.grid(True, alpha=0.3)
+            
+            # Highlight current k value
+            current_k = self.model.n_clusters
+            if current_k in k_range:
+                current_inertia = inertias[current_k - 1]
+                ax.scatter([current_k], [current_inertia], color='red', s=200, zorder=5, 
+                          label=f'Obecna wartość k={current_k}')
+                ax.legend()
+            
+            evaluation['plot_kmeans_elbow'] = plot_to_base64(fig)
+        except Exception as e:
+            print(f"Błąd podczas rysowania metody łokcia: {e}")
+            evaluation['plot_kmeans_elbow'] = None
 
+        return evaluation
 
 class DBSCANModel(BaseUnsupervisedModel):
     def create_model(self):
