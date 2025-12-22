@@ -77,13 +77,23 @@ class BaseClassificationModel(BaseMLModel):
         accuracy = accuracy_score(self.y_test, y_pred)
         f1 = f1_score(self.y_test, y_pred, average='weighted', zero_division=0)
         report = classification_report(self.y_test, y_pred, output_dict=True, zero_division=0)
+        
+        # Get prediction probabilities if available (for ROC curve)
+        y_pred_proba = None
+        try:
+            if hasattr(self.model, 'predict_proba'):
+                y_pred_proba = self.model.predict_proba(self.X_test)
+        except Exception as e:
+            print(f"Nie można uzyskać prawdopodobieństw predykcji: {e}")
+        
         return {
             "model_type": "Classification",
             "accuracy": accuracy,
             "f1": f1,
             "classification_report": report,
             "y_test": self.y_test.tolist(),
-            "y_pred": y_pred.tolist()
+            "y_pred": y_pred.tolist(),
+            "y_pred_proba": y_pred_proba.tolist() if y_pred_proba is not None else None
         }
 
 

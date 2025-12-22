@@ -546,7 +546,7 @@ class KMeansModel(BaseUnsupervisedModel):
             ax.plot(k_range, inertias, marker='o', linestyle='--', linewidth=2, markersize=8)
             ax.set_xlabel('Liczba klastrów (k)')
             ax.set_ylabel('WCSS (Within-Cluster Sum of Squares)')
-            ax.set_title('Metoda Łokcia (Elbow Method) - Wybór optymalnej liczby klastrów')
+            ax.set_title('Elbow Method - Wybór optymalnej liczby klastrów')
             ax.grid(True, alpha=0.3)
             
             # Highlight current k value

@@ -330,15 +330,36 @@ def generate_clustering_plots(result_data, df, target_column):
     Returns a list of Base64 strings.
     """
     plots = []
-    print(f"DEBUG generate_clustering_plots: result_data keys={list(result_data.keys()) if result_data else 'None'}")
-    print(f"DEBUG generate_clustering_plots: result_data={result_data}")
-    
     labels = result_data.get('labels')
-    print(f"DEBUG generate_clustering_plots: labels={labels}, type={type(labels)}, is None={labels is None}, is empty list={labels == []}")
-    
-    if not labels:
-        print("Brak etykiet klastrów w result_data")
-        return plots
+
+    if labels and len(labels) == len(df):
+        try:
+            # Adds cluster labels to DataFrame for plotting
+            df_plot = df.copy()
+            df_plot['cluster'] = labels
+
+            # Try to plot using first two numeric columns
+            numeric_cols = df_plot.select_dtypes(include=np.number).columns
+
+            if len(numeric_cols) >= 2:
+                x_axis = numeric_cols[0]
+                y_axis = numeric_cols[1]
+
+                fig, ax = plt.subplots()
+                sns.scatterplot(data=df_plot, x=x_axis, y=y_axis, hue='cluster', palette='deep', ax=ax)
+                ax.set_title(f'Wizualizacja klastrów ({y_axis} vs {x_axis})')
+                plots.append(plot_to_base64(fig))
+
+            # 2. Plot of cluster counts
+            fig_count, ax_count = plt.subplots()
+            sns.countplot(x=df_plot['cluster'], ax=ax_count)
+            ax_count.set_title('Liczność klastrów')
+            plots.append(plot_to_base64(fig_count))
+
+        except Exception as e:
+            print(f"Błąd rysowania wykresów klastrowania: {e}")
+
+    return plots
 
 
 def generate_dim_reduction_plots(result_data, df, target_column):
