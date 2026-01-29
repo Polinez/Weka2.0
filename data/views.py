@@ -114,9 +114,13 @@ def set_target(request, dataset_id):
 
 @login_required
 def delete_dataset(request, dataset_id):
-    """Soft delete dataset (archive)."""
+    """
+    Soft delete dataset (archive) AND Hard delete related heavy artifacts.
+    """
     if request.method == 'POST':
         dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
+        dataset.pipelines.all().delete() # Clean train/test files in media/pipelines/
+        dataset.runs.all().delete()      # Clean model files .joblib in media/models/
         dataset.is_archived = True
         dataset.save()
     return redirect('data:load_data')

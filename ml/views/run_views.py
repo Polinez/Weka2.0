@@ -75,12 +75,8 @@ def run_model(request):
             messages.error(request, result['error'])
             return redirect("ml:run_model")
 
-        eval_data = result.get('evaluation', {})
         plots_list = list(result.get('plots_base64', []))
-        for key, val in eval_data.items():
-            if key.startswith('plot_') and val:
-                plots_list.append(val)
-
+        
         metrics = result.get('metrics', {})
         metrics['plots_base64'] = plots_list
 

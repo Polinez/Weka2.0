@@ -1,4 +1,5 @@
 """Preprocessing services - apply steps, execute pipeline, reset."""
+import os 
 import io
 import uuid
 from pathlib import Path
@@ -44,9 +45,12 @@ def _split_dataframe(df: pd.DataFrame, split_config: dict, target_col: str | Non
     from sklearn.model_selection import train_test_split
     test_size = split_config.get('test_size', 0.2)
     random_state = split_config.get('random_state', 42)
+
     stratify = None
-    if target_col and target_col in df.columns and df[target_col].nunique() > 1:
-        stratify = df[target_col]
+    if target_col and target_col in df.columns:
+        if df[target_col].value_counts().min() >= 2:
+            stratify = df[target_col]
+
     return train_test_split(df, test_size=test_size, random_state=random_state, stratify=stratify)
 
 
@@ -175,7 +179,24 @@ def apply_preprocessing_step(
 
 
 def reset_pipeline(pipeline: PreprocessingPipeline) -> None:
-    """Remove steps and clear processed paths."""
+    """Remove steps and clear processed paths AND DELETE FILES FROM DISK."""
+    
+    paths_to_remove = [
+        pipeline.processed_file_path,
+        pipeline.processed_train_path,
+        pipeline.processed_test_path
+    ]
+    
+    for relative_path in paths_to_remove:
+        if relative_path:
+            full_path = Path(settings.MEDIA_ROOT) / relative_path
+            if full_path.exists():
+                try:
+                    os.remove(full_path)
+                    print(f"Usunięto plik: {full_path}")
+                except OSError as e:
+                    print(f"Błąd usuwania pliku przy resecie: {e}")
+
     pipeline.steps.all().delete()
     pipeline.processed_file_path = None
     pipeline.processed_train_path = None
@@ -186,21 +207,21 @@ def reset_pipeline(pipeline: PreprocessingPipeline) -> None:
 
 def get_train_test_dataframes(pipeline: PreprocessingPipeline) -> tuple[pd.DataFrame, pd.DataFrame] | None:
     """Returns (df_train, df_test) or None if data not available."""
+    # 1. Try to read from cache files (if they exist)
     if pipeline.processed_train_path and pipeline.processed_test_path:
         base = Path(settings.MEDIA_ROOT)
-        return (
-            pd.read_csv(base / pipeline.processed_train_path),
-            pd.read_csv(base / pipeline.processed_test_path),
-        )
+        try:
+            return (
+                pd.read_csv(base / pipeline.processed_train_path),
+                pd.read_csv(base / pipeline.processed_test_path),
+            )
+        except FileNotFoundError:
+            pass # If files don't exist, generate split live
+
+    # 2. Generate split live (if files don't exist)
     dataset = pipeline.dataset
     split_config = pipeline.split_config or {}
     target_col = get_target_column_name(dataset)
     df = load_dataset_dataframe(dataset)
-    from sklearn.model_selection import train_test_split
-    test_size = split_config.get('test_size', 0.2)
-    random_state = split_config.get('random_state', 42)
-    stratify = None
-    if target_col and target_col in df.columns and df[target_col].nunique() > 1:
-        stratify = df[target_col]
-    train_df, test_df = train_test_split(df, test_size=test_size, random_state=random_state, stratify=stratify)
-    return train_df, test_df
+    
+    return _split_dataframe(df, split_config, target_col)

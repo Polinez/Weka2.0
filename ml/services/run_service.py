@@ -56,9 +56,12 @@ def run_ml_experiment(
             df = load_dataset_dataframe(dataset)
             test_size = split_config.get('test_size', 0.2)
             random_state = split_config.get('random_state', 42)
+
             stratify = None
-            if target_column and target_column in df.columns and df[target_column].nunique() > 1:
-                stratify = df[target_column]
+            if target_column and target_column in df.columns:
+                if df[target_column].value_counts().min() >= 2:
+                    stratify = df[target_column]
+                    
             df_train, df_test = train_test_split(
                 df, test_size=test_size, random_state=random_state, stratify=stratify
             )
