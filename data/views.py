@@ -38,12 +38,18 @@ def load_data(request):
                 save_uploaded_file(request.user, uploaded_file, df)
                 return redirect('data:load_data')
             except IntegrityError:
-                error = f"Zestaw danych o tej nazwie {uploaded_file.name} już istnieje."
+                error = f"Zestaw danych o nazwie '{uploaded_file.name}' już istnieje (sprawdź też archiwum poniżej)."
             except Exception as e:
                 error = f"Błąd podczas przetwarzania pliku: {str(e)}"
 
     datasets = Dataset.objects.filter(user=request.user, is_archived=False).order_by('-created_at')
-    return render(request, 'loadData.html', {"error": error, "datasets": datasets})
+    archived_datasets = Dataset.objects.filter(user=request.user, is_archived=True).order_by('-created_at')
+
+    return render(request, 'loadData.html', {
+        "error": error, 
+        "datasets": datasets,
+        "archived_datasets": archived_datasets 
+    })
 
 
 @login_required
@@ -123,6 +129,20 @@ def delete_dataset(request, dataset_id):
         dataset.runs.all().delete()      # Clean model files .joblib in media/models/
         dataset.is_archived = True
         dataset.save()
+        messages.success(request, "Zbiór został przeniesiony do archiwum.")
+    return redirect('data:load_data')
+
+
+@login_required
+def restore_dataset(request, dataset_id):
+    """
+    Restore dataset from archive (is_archived = False).
+    """
+    dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
+    if request.method == 'POST':
+        dataset.is_archived = False
+        dataset.save()
+        messages.success(request, f"Zbiór '{dataset.name}' został przywrócony.")
     return redirect('data:load_data')
 
 

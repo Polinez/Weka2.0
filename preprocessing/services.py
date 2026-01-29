@@ -40,17 +40,17 @@ def get_data_source_path(pipeline: PreprocessingPipeline) -> str | None:
     return pipeline.dataset.file_path
 
 
-def _split_dataframe(df: pd.DataFrame, split_config: dict, target_col: str | None):
-    """Split df into train/test using split_config."""
+def split_dataframe(df: pd.DataFrame, split_config: dict, target_col: str | None):
+    """Split df into train/test using split_config (Centralized Logic)."""
     from sklearn.model_selection import train_test_split
     test_size = split_config.get('test_size', 0.2)
     random_state = split_config.get('random_state', 42)
-
+    
     stratify = None
     if target_col and target_col in df.columns:
         if df[target_col].value_counts().min() >= 2:
             stratify = df[target_col]
-
+            
     return train_test_split(df, test_size=test_size, random_state=random_state, stratify=stratify)
 
 
@@ -207,7 +207,7 @@ def reset_pipeline(pipeline: PreprocessingPipeline) -> None:
 
 def get_train_test_dataframes(pipeline: PreprocessingPipeline) -> tuple[pd.DataFrame, pd.DataFrame] | None:
     """Returns (df_train, df_test) or None if data not available."""
-    # 1. Try to read from cache files (if they exist)
+    # 1. Try to read from cache
     if pipeline.processed_train_path and pipeline.processed_test_path:
         base = Path(settings.MEDIA_ROOT)
         try:
@@ -216,12 +216,12 @@ def get_train_test_dataframes(pipeline: PreprocessingPipeline) -> tuple[pd.DataF
                 pd.read_csv(base / pipeline.processed_test_path),
             )
         except FileNotFoundError:
-            pass # If files don't exist, generate split live
+            pass 
 
-    # 2. Generate split live (if files don't exist)
+    # 2. Generate live using centralized function
     dataset = pipeline.dataset
     split_config = pipeline.split_config or {}
     target_col = get_target_column_name(dataset)
     df = load_dataset_dataframe(dataset)
     
-    return _split_dataframe(df, split_config, target_col)
+    return split_dataframe(df, split_config, target_col)

@@ -67,8 +67,47 @@
       </div>
     {% endif %}
   </div>
-  </div>
+</div>
 
+{% if archived_datasets %}
+<div class="container mt-5 mb-5">
+    <hr>
+    <h3 class="text-center text-secondary mb-4">Archiwum</h3>
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover border shadow-sm bg-white">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Nazwa pliku</th>
+                            <th>Data wgrania</th>
+                            <th>Rozmiar</th>
+                            <th class="text-right">Akcja</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ds in archived_datasets %}
+                        <tr>
+                            <td>{{ ds.name }}</td>
+                            <td>{{ ds.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ ds.file_size_bytes|filesizeformat }}</td>
+                            <td class="text-right">
+                                <form method="post" action="{% url 'data:restore_dataset' ds.dataset_id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        Przywróć
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% else %}
   <div class="container mt-5">
     <div class="alert alert-warning text-center">

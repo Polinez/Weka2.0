@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from data.models import Dataset
 from data.services import get_target_column_name
 from preprocessing.models import PreprocessingPipeline
-from preprocessing.services import get_train_test_dataframes
+from preprocessing.services import get_train_test_dataframes, split_dataframe
 from .model_registry import MODEL_MAPPING
 from .plot_service import (
     generate_classification_plots,
@@ -52,19 +52,8 @@ def run_ml_experiment(
             df_train, df_test = result
         else:
             from data.services import load_dataset_dataframe
-            from sklearn.model_selection import train_test_split
             df = load_dataset_dataframe(dataset)
-            test_size = split_config.get('test_size', 0.2)
-            random_state = split_config.get('random_state', 42)
-
-            stratify = None
-            if target_column and target_column in df.columns:
-                if df[target_column].value_counts().min() >= 2:
-                    stratify = df[target_column]
-                    
-            df_train, df_test = train_test_split(
-                df, test_size=test_size, random_state=random_state, stratify=stratify
-            )
+            df_train, df_test = split_dataframe(df, split_config, target_column)
 
         ModelClass = MODEL_MAPPING.get(model.name)
         if not ModelClass:

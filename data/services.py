@@ -40,21 +40,30 @@ def save_uploaded_file(user: User, uploaded_file, df: pd.DataFrame) -> Dataset:
     user_dir = Path(settings.MEDIA_ROOT) / 'datasets' / str(user.id)
     user_dir.mkdir(parents=True, exist_ok=True)
     file_path = user_dir / f"{dataset_id}.csv"
+    
+    # Save file
     df.to_csv(file_path, index=False)
-
     relative_path = f"datasets/{user.id}/{dataset_id}.csv"
-    dataset = Dataset.objects.create(
-        dataset_id=dataset_id,
-        user=user,
-        name=uploaded_file.name,
-        file_path=relative_path,
-        row_count=len(df),
-        column_count=len(df.columns),
-        file_size_bytes=file_path.stat().st_size,
-    )
-    infer_and_save_columns(dataset, df)
-    return dataset
 
+    # Database operations in transaction
+    try:
+        with transaction.atomic():
+            dataset = Dataset.objects.create(
+                dataset_id=dataset_id,
+                user=user,
+                name=uploaded_file.name,
+                file_path=relative_path,
+                row_count=len(df),
+                column_count=len(df.columns),
+                file_size_bytes=file_path.stat().st_size,
+            )
+            infer_and_save_columns(dataset, df)
+            return dataset
+    except Exception:
+        # If database fails, delete file to avoid clutter
+        if file_path.exists():
+            os.remove(file_path)
+        raise # Raise error to view to handle it
 
 def infer_and_save_columns(dataset: Dataset, df: pd.DataFrame) -> None:
     """Infers column types and creates DatasetColumn records."""
