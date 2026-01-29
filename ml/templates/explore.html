@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}ML Studio - {{ dataset.name }}{% endblock %}
+
+{% block content %}
+
+    {% include "_submenu.html" %}
+
+    <style>
+    .scrollable-content {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .table thead th:first-child,
+    .table tbody td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 2;
+        box-shadow: 2px 0 2px rgba(0,0,0,0.1);
+    }
+    </style>
+
+    <h2>Eksploracja datasetu: {{ dataset.name }}</h2>
+
+    <div class="row g-3">
+        <div class="col-md-6 mb-3 d-flex">
+            <div class="card shadow-sm flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Wybór kolumny do eksploracji</h5>
+                    <form method="post" action="{% url 'ml:studio' %}">
+                        {% csrf_token %}
+                        <div class="bg-light p-3 d-flex flex-column scrollable-content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nr.</th>
+                                        <th>radiobutton</th>
+                                        <th>Nazwa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for col in columns %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <input type="radio" name="selected_column" value="{{ col }}"
+                                                    {% if col == selected_column %}checked{% endif %}
+                                                    onchange="this.form.submit()">
+                                            </td>
+                                            <td>{{ col }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3 d-flex">
+            <div class="card shadow-sm flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Rozkład cechy</h5>
+                    <div class="bg-light text-center p-2 scrollable-content">
+                        {% if graph %}
+                            <img src="data:image/png;base64,{{ graph }}" alt="Wykres rozkładu cech" class="img-fluid rounded shadow-sm"/>
+                        {% else %}
+                            <p>Brak wykresu do wyświetlenia.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm flex-fill mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Wizualizacja danych</h5>
+            <div class="bg-white scrollable-content">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm flex-fill mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Statystyki</h5>
+            <div class="bg-white scrollable-content">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            {% for col in stat_columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in statistics %}
+                            <tr>
+                                {% for value in row %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

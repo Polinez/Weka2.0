@@ -1,0 +1,206 @@
+"""Preprocessing services - apply steps, execute pipeline, reset."""
+import io
+import uuid
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from django.conf import settings
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
+
+from django.db.models import Max
+
+from data.models import Dataset
+from data.services import load_dataset_dataframe, get_target_column_name
+from .models import PreprocessingPipeline, PreprocessingStep, PreprocessingType
+
+
+def get_or_create_active_pipeline(dataset: Dataset, split_config: dict) -> PreprocessingPipeline:
+    """Get or create active pipeline for dataset."""
+    pipeline = dataset.pipelines.filter(is_active=True).first()
+    if not pipeline:
+        dataset.pipelines.update(is_active=False)
+        pipeline = PreprocessingPipeline.objects.create(
+            dataset=dataset,
+            is_active=True,
+            split_config=split_config,
+        )
+    else:
+        pipeline.split_config = split_config
+        pipeline.save()
+    return pipeline
+
+
+def get_data_source_path(pipeline: PreprocessingPipeline) -> str | None:
+    """Returns path to load data from: processed train (for full df) or dataset raw."""
+    if pipeline.processed_train_path:
+        return pipeline.processed_train_path
+    return pipeline.dataset.file_path
+
+
+def _split_dataframe(df: pd.DataFrame, split_config: dict, target_col: str | None):
+    """Split df into train/test using split_config."""
+    from sklearn.model_selection import train_test_split
+    test_size = split_config.get('test_size', 0.2)
+    random_state = split_config.get('random_state', 42)
+    stratify = None
+    if target_col and target_col in df.columns and df[target_col].nunique() > 1:
+        stratify = df[target_col]
+    return train_test_split(df, test_size=test_size, random_state=random_state, stratify=stratify)
+
+
+def _apply_imputation(df_train: pd.DataFrame, df_test: pd.DataFrame, col: str, params: dict):
+    method = params.get('method', 'mean')
+    strategy = 'mean' if method == 'mean' else ('median' if method == 'median' else 'most_frequent')
+    imputer = SimpleImputer(strategy=strategy)
+    imputer.fit(df_train[[col]])
+    df_train[col] = imputer.transform(df_train[[col]])
+    df_test[col] = imputer.transform(df_test[[col]])
+
+
+def _apply_encoding(df_train: pd.DataFrame, df_test: pd.DataFrame, col: str, params: dict):
+    method = params.get('method', 'label_encoder')
+    if method == 'label_encoder':
+        enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=np.nan)
+        df_train[[col]] = enc.fit_transform(df_train[[col]].astype(str))
+        df_test[[col]] = enc.transform(df_test[[col]].astype(str))
+        if df_test[col].isnull().any():
+            imputer = SimpleImputer(strategy='most_frequent')
+            imputer.fit(df_train[[col]])
+            df_test[col] = imputer.transform(df_test[[col]])
+    elif method == 'one_hot_encoder':
+        ohe = OneHotEncoder(handle_unknown='ignore', drop=None, sparse_output=False, dtype=int)
+        ohe.fit(df_train[[col]])
+        new_cols = ohe.get_feature_names_out([col])
+        tr_train = ohe.transform(df_train[[col]])
+        tr_test = ohe.transform(df_test[[col]])
+        df_train.drop(columns=[col], inplace=True)
+        df_test.drop(columns=[col], inplace=True)
+        for i, c in enumerate(new_cols):
+            df_train[c] = tr_train[:, i]
+            df_test[c] = tr_test[:, i]
+
+
+def _apply_scaling(df_train: pd.DataFrame, df_test: pd.DataFrame, col: str, params: dict):
+    method = params.get('method', 'standardization')
+    scaler = StandardScaler() if method == 'standardization' else MinMaxScaler()
+    scaler.fit(df_train[[col]])
+    df_train[col] = scaler.transform(df_train[[col]])
+    df_test[col] = scaler.transform(df_test[[col]])
+
+
+def _apply_drop_column(df_train: pd.DataFrame, df_test: pd.DataFrame, col: str):
+    df_train.drop(columns=[col], inplace=True)
+    df_test.drop(columns=[col], inplace=True)
+
+
+STEP_HANDLERS = {
+    'Imputation': _apply_imputation,
+    'Encoding': _apply_encoding,
+    'Scaling': _apply_scaling,
+    'DropColumn': _apply_drop_column,
+}
+
+
+def execute_pipeline_steps(pipeline: PreprocessingPipeline) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Load data from dataset, split, apply all steps in order, return (df_train, df_test).
+    """
+    dataset = pipeline.dataset
+    split_config = pipeline.split_config or {}
+    target_col = get_target_column_name(dataset)
+
+    df = load_dataset_dataframe(dataset)
+    df_train, df_test = _split_dataframe(df, split_config, target_col)
+
+    steps = pipeline.steps.all().order_by('order')
+    for step in steps:
+        handler = STEP_HANDLERS.get(step.type.name)
+        if not handler:
+            continue
+        col = step.parameters.get('column')
+        if not col or col not in df_train.columns:
+            continue
+        if step.type.name == 'DropColumn':
+            _apply_drop_column(df_train, df_test, col)
+        else:
+            handler(df_train, df_test, col, step.parameters)
+
+    return df_train, df_test
+
+
+def apply_preprocessing_step(
+    pipeline: PreprocessingPipeline,
+    step_type_name: str,
+    column: str,
+    params: dict,
+) -> str | None:
+    """
+    Add step to pipeline, execute, save train/test files. Returns error message or None.
+    """
+    step_type = PreprocessingType.objects.filter(name=step_type_name).first()
+    if not step_type:
+        return f"Nieznany typ operacji: {step_type_name}"
+
+    next_order = (pipeline.steps.aggregate(Max('order'))['order__max'] or 0) + 1
+    step_params = {'column': column, **params}
+
+    PreprocessingStep.objects.create(
+        pipeline=pipeline,
+        order=next_order,
+        type=step_type,
+        parameters=step_params,
+    )
+
+    try:
+        df_train, df_test = execute_pipeline_steps(pipeline)
+    except Exception as e:
+        pipeline.steps.filter(order=next_order).delete()
+        return str(e)
+
+    base = Path(settings.MEDIA_ROOT) / 'pipelines' / str(pipeline.id)
+    base.mkdir(parents=True, exist_ok=True)
+    train_path = f"pipelines/{pipeline.id}/train_{uuid.uuid4()}.csv"
+    test_path = f"pipelines/{pipeline.id}/test_{uuid.uuid4()}.csv"
+    df_train.to_csv(Path(settings.MEDIA_ROOT) / train_path, index=False)
+    df_test.to_csv(Path(settings.MEDIA_ROOT) / test_path, index=False)
+
+    pipeline.processed_train_path = train_path
+    pipeline.processed_test_path = test_path
+    pipeline.processed_file_path = train_path
+    pipeline.output_columns_metadata = {'columns': list(df_train.columns)}
+    pipeline.save()
+    return None
+
+
+def reset_pipeline(pipeline: PreprocessingPipeline) -> None:
+    """Remove steps and clear processed paths."""
+    pipeline.steps.all().delete()
+    pipeline.processed_file_path = None
+    pipeline.processed_train_path = None
+    pipeline.processed_test_path = None
+    pipeline.output_columns_metadata = {}
+    pipeline.save()
+
+
+def get_train_test_dataframes(pipeline: PreprocessingPipeline) -> tuple[pd.DataFrame, pd.DataFrame] | None:
+    """Returns (df_train, df_test) or None if data not available."""
+    if pipeline.processed_train_path and pipeline.processed_test_path:
+        base = Path(settings.MEDIA_ROOT)
+        return (
+            pd.read_csv(base / pipeline.processed_train_path),
+            pd.read_csv(base / pipeline.processed_test_path),
+        )
+    dataset = pipeline.dataset
+    split_config = pipeline.split_config or {}
+    target_col = get_target_column_name(dataset)
+    df = load_dataset_dataframe(dataset)
+    from sklearn.model_selection import train_test_split
+    test_size = split_config.get('test_size', 0.2)
+    random_state = split_config.get('random_state', 42)
+    stratify = None
+    if target_col and target_col in df.columns and df[target_col].nunique() > 1:
+        stratify = df[target_col]
+    train_df, test_df = train_test_split(df, test_size=test_size, random_state=random_state, stratify=stratify)
+    return train_df, test_df

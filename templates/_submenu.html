@@ -3,31 +3,36 @@
     <ul class="nav justify-content-between text-white fw-semibold">
 
       <li class="nav-item">
-        <a class="nav-link {% if request.path == '/mlstudio/' %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/">
+        <a class="nav-link {% if request.resolver_match.url_name == 'studio' and request.resolver_match.app_name == 'ml' %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" 
+           href="{% url 'ml:studio' %}">
           Informacje
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link {% if '/mlstudio/preprocess' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/preprocess">
+        <a class="nav-link {% if 'preprocess' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" 
+           href="{% url 'ml:preprocess' %}">
           Preprocessing
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link {% if '/mlstudio/models' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/models">
+        <a class="nav-link {% if 'models' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" 
+           href="{% url 'ml:models' %}">
           Modele
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link {% if '/mlstudio/run' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/run">
+        <a class="nav-link {% if 'run' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" 
+           href="{% url 'ml:run_model' %}">
           Uruchom
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link {% if '/mlstudio/visualize' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" href="/mlstudio/visualize">
+        <a class="nav-link {% if 'visualize' in request.path %}bg-white text-dark rounded-4{% else %}text-white{% endif %}" 
+           href="{% url 'ml:visualize' %}">
           Wizualizacja
         </a>
       </li>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block title %} AI Analyzer - Konfiguracja zadania {% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center">Konfiguracja zadania dla: {{ dataset.name }}</h2>
+
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="mt-4">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      <label for="problem_type" class="form-label">Typ zadania ML</label>
+      <select name="problem_type" id="problem_type" class="form-select" required>
+        {% for type_val, type_name in problem_type_choices %}
+          <option value="{{ type_val }}" {% if type_val == dataset.problem_type %}selected{% endif %}>
+            {{ type_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3" id="target_column_wrapper">
+      <label for="target_column" class="form-label">Kolumna decyzyjna</label>
+      <p class="form-text text-muted" style="margin-top: -10px;">
+          (Wymagana tylko dla zadań nadzorowanych, np. Regresji lub Klasyfikacji)
+      </p>
+      <select name="target_column" id="target_column" class="form-select">
+        <option value="">-- Brak (dla zadań nienadzorowanych) --</option>
+        {% for col in columns %}
+          <option value="{{ col }}" {% if col == dataset.target_column %}selected{% endif %}>{{ col }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <hr>
+    <h5 class="mt-4">Konfiguracja podziału danych</h5>
+    <p class="form-text text-muted" style="margin-top: -10px;">
+        Dane zostaną podzielone na zbiór treningowy i testowy zgodnie z poniższymi ustawieniami.
+    </p>
+
+    <div class="mb-3">
+        <label for="test_size" class="form-label">Proporcja zbioru testowego (np. 0.2 dla 20%)</label>
+        <input type="number" name="test_size" id="test_size" class="form-control"
+               value="{{ default_test_size|unlocalize }}"
+               min="0.1" max="0.9" step="0.01" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="random_state" class="form-label">Ziarno losowości (seed)</label>
+        <input type="number" name="random_state" id="random_state" class="form-control"
+               value="{{ default_random_state|default:42 }}"
+               step="1" required>
+        <div class="form-text text-muted">Podanie tej samej liczby (np. 42) gwarantuje ten sam podział danych przy każdym uruchomieniu.</div>
+    </div>
+
+
+    <button type="submit" class="btn btn-success mt-3">Zapisz i dokonaj podziału</button>
+    <a href="{% url 'data:load_data' %}" class="btn btn-secondary mt-3">Anuluj</a>
+  </form>
+</div>
+{% endblock %}

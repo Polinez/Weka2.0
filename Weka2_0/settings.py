@@ -42,11 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "loadData",
+    "core",
+    "data",
+    "preprocessing",
+    "ml",
     "crispy_forms",
-    "crispy_bootstrap4",  # added for crispy-bootstrap4 support
+    "crispy_bootstrap4",
     "register",
-    "mlstudio",
 ]
 
 MIDDLEWARE = [
@@ -154,5 +156,5 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 
 # Login URL
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'loadData:load_data'  # Redirect to home after login
+LOGIN_REDIRECT_URL = 'data:load_data'  # Redirect to home after login
 LOGOUT_REDIRECT_URL = 'login'  # Redirect to login after logout

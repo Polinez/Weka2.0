@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}ML Studio - {{ dataset.name }}{% endblock %}
+
+{% block content %}
+
+    {% include "_submenu.html" %}
+
+    <style>
+    .scrollable-content {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    </style>
+
+    <h2>Preprocessing datasetu: {{ dataset.name }}</h2>
+    <div class="card shadow-sm flex-fill mb-3">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Wizualizacja danych (pierwsze 5 wierszy)</h5>
+            <div class="bg-white scrollable-content">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 mb-3 d-flex">
+            <form method="POST" action="{% url 'ml:preprocess' %}" class="w-100">
+                {% csrf_token %}
+                <div class="card shadow-sm flex-fill h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title mb-3">Cechy</h5>
+                        <div class="bg-light p-3 d-flex flex-column scrollable-content flex-grow-1">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nr.</th>
+                                        <th>Wybierz</th>
+                                        <th>Nazwa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for col in columns %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>
+                                                <input type="radio" name="feature" value="{{ col }}"
+                                                    {% if col == selected_feature_name %}checked{% endif %}
+                                                    onchange="this.form.submit()">
+                                            </td>
+                                            <td>{{ col }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6 mb-3 d-flex">
+            <form method="POST" action="{% url 'ml:preprocess_apply' %}" class="w-100">
+                {% csrf_token %}
+                <div class="card shadow-sm flex-fill h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Operacje na wybranej cesze</h5>
+
+                        {% if selected_feature_name %}
+                            <div class="bg-white p-3">
+                                <p class="alert alert-info">Wybrana cecha: <strong>{{ selected_feature_name }}</strong></p>
+
+                                {% if selected_feature_metadata.missing_count > 0 and selected_feature_metadata.is_numeric %}
+                                    <div class="mb-4 p-3 border rounded">
+                                        <p class="text-muted text-start mb-3">Liczba pustych rekordów: <strong>{{ selected_feature_metadata.missing_count }}</strong></p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <select name="imputation_method" class="form-select flex-grow-1">
+                                                <option selected value="">Wybierz metodę uzupełniania braków...</option>
+                                                <option value="mean">Średnia</option>
+                                                <option value="median">Mediana</option>
+                                                <option value="mode">Najczęstsza wartość (dominanta)</option>
+                                            </select>
+                                            <button type="submit" name="apply_operation" value="impute" class="btn btn-success btn-sm flex-shrink-0">Zatwierdź</button>
+                                        </div>
+                                    </div>
+                                {% elif selected_feature_metadata.missing_count > 0 %}
+                                {% else %}
+                                    <div class="mb-4 p-3 border rounded bg-light">
+                                        <p class="text-muted text-start mb-0">Brak pustych rekordów.</p>
+                                    </div>
+                                {% endif %}
+
+                                {% if selected_feature_metadata.is_categorical %}
+                                    <div class="mb-4 p-3 border rounded">
+                                        <p class="text-muted text-start mb-3">Typ danych: <strong>{{ selected_feature_metadata.dtype }}</strong></p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <select name="encoding_method" class="form-select flex-grow-1">
+                                                <option selected value="">Wybierz metodę kodowania...</option>
+                                                <option value="label_encoder">Kodowanie etykiet (LabelEncoder)</option>
+                                                <option value="one_hot_encoder">Kodowanie binarne (One-Hot-Encoder)</option>
+                                            </select>
+                                            <button type="submit" name="apply_operation" value="encode" class="btn btn-success btn-sm flex-shrink-0">Zatwierdź</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if selected_feature_metadata.is_numeric %}
+                                    <div class="mb-4 p-3 border rounded">
+                                        <p class="text-muted text-start mb-3">Standaryzacja/Normalizacja (typ: <strong>{{ selected_feature_metadata.dtype }}</strong>)</p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <select name="scaling_method" class="form-select flex-grow-1">
+                                                <option selected value="">Wybierz metodę skalowania...</option>
+                                                <option value="standardization">Standaryzacja (Z-score)</option>
+                                                <option value="normalization">Normalizacja (Min-Max)</option>
+                                            </select>
+                                            <button type="submit" name="apply_operation" value="scale" class="btn btn-success btn-sm flex-shrink-0">Zatwierdź</button>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mb-4 p-3 border rounded">
+                                    <p class="text-danger text-start mb-2">Usuwanie kolumny</p>
+                                    <p class="small text-muted mb-2">Usunięcie kolumny jest nieodwracalne (do czasu resetu).</p>
+                                    <div class="d-flex">
+                                        <button type="submit" name="apply_operation" value="delete" class="btn btn-danger btn-sm flex-grow-1"
+                                                onclick="return confirm('Czy na pewno chcesz usunąć kolumnę \'{{ selected_feature_name }}\'?');">
+                                            Usuń kolumnę: <strong>{{ selected_feature_name }}</strong>
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="feature" value="{{ selected_feature_name }}">
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                Wybierz cechę z listy po lewej.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6 mb-3 d-flex">
+            <div class="card shadow-sm flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Zarządzanie zmianami</h5>
+                    <p class="card-text text-muted">Wszystkie operacje są zapisywane w pipeline.</p>
+                    <form method="post" action="{% url 'ml:preprocess_reset' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">Cofnij wszystkie zmiany</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3 d-flex">
+            <div class="card shadow-sm flex-fill">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Historia operacji</h5>
+                    <div class="bg-light p-3 scrollable-content" style="max-height: 200px;">
+                        {% if preprocessing_history %}
+                            <ul class="list-group list-group-flush">
+                                {% for item in preprocessing_history %}
+                                    <li class="list-group-item bg-light">{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">Nie wykonano jeszcze żadnych operacji.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -6,7 +6,10 @@ cd C:\RepozytoriumGit\Weka2.0
 python manage.py runserver
 
 
-ABY ZROC MIGRACJE (ZMIANA W BAZIE DANYCH):
+ABY ZROBIC MIGRACJE (ZMIANA W BAZIE DANYCH):
 cd C:\RepozytoriumGit\Weka2.0
 python manage.py makemigrations
 python manage.py migrate
+
+ABY ZASIAĆ DANE POCZĄTKOWE (PreprocessingType, ML models):
+python manage.py seed_data

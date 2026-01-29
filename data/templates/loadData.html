@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %} AI Analyzer - Strona Główna {% endblock %}
+{% block content %}
+
+{% if user.is_authenticated %}
+
+  <div class="container mt-5">
+    <h2 class="text-center">Witaj w AI Analyzer</h2>
+    <p class="text-center">Wprowadź swój dataset, na którym będziesz chciał przetestować modele ML</p>
+    <form class="text-center mt-4" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="file" accept=".csv" class="form-control mb-3" required>
+      <button type="submit" class="btn btn-primary">Dodaj CSV</button>
+    </form>
+    {% if error %}
+      <div class="alert alert-danger mt-3" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="container mt-5">
+  <h3 class="text-center">Dostępne pliki CSV</h3>
+  <div class="row">
+    {% if datasets %}
+      {% for dataset in datasets %}
+        <div class="col-md-4 mb-4 ">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title mb-3"><strong>{{ dataset.name }}</strong></h5>
+
+              <p class="mb-1"><strong>Typ problemu:</strong> {{ dataset.problem_type|default:"-" }}</p>
+              <p class="mb-1"><strong>Kolumna decyzyjna:</strong> {{ dataset.target_column|default:"-" }}</p>
+              <p class="mb-1"><strong>Wiersze:</strong> {{ dataset.row_count }}</p>
+              <p class="mb-1"><strong>Kolumny:</strong> {{ dataset.column_count }}</p>
+
+              <p class="card-text mt-2"><strong>Opis:</strong> {{ dataset }}</p>
+            </div>
+
+            <div class="card-footer d-flex justify-content-between">
+                {% if dataset.problem_type %}
+                <form method="post" action="{% url 'ml:select_dataset' dataset.dataset_id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-sm">Wybierz</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'data:set_target' dataset.dataset_id %}" class="btn btn-white btn-sm btn-outline-secondary">
+                    Konfiguruj zadanie
+                </a>
+
+              <form method="post" action="{% url 'data:delete_dataset' dataset.dataset_id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Usuń</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="alert alert-info text-center">Brak dostępnych plików CSV</div>
+        {% if error %}
+          <div class="alert alert-danger mt-3" role="alert">
+            {{ error }}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  </div>
+
+{% else %}
+  <div class="container mt-5">
+    <div class="alert alert-warning text-center">
+      Musisz być zalogowany, aby zobaczyć tę stronę.
+        <p>Zaloguj się! - <a href="/login/">Tutaj</a></p>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}ML Studio - {{ dataset.name }}{% endblock %}
+
+{% block content %}
+
+    {% include "_submenu.html" %}
+
+    <style>
+        .card-auto-400 { max-height: 400px; overflow-y: auto; }
+        .card-fixed-400 { height: 400px; overflow-y: auto; }
+        .list-group-item.active { background-color: #e9ecef; color: #212529; border-color: #ced4da; }
+    </style>
+
+    <h2>Uruchomienie datasetu: {{ dataset.name }}</h2>
+
+    <form method="post">
+    {% csrf_token %}
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm card-auto-400">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Podsumowanie parametrów uczenia:</h5>
+                        <div class="bg-light p-3">
+                            <table class="table table-sm table-bordered bg-white mb-0">
+                                <thead>
+                                    <tr><th>Nazwa parametru</th><th>Wartość</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% if model_to_display %}
+                                        <tr><td>Wybrany model</td><td>{{ model_to_display.name }}</td></tr>
+                                    {% endif %}
+                                    {% for name, value in displayed_common_params.items %}
+                                        <tr><td>{{ name }}</td><td>{{ value }}</td></tr>
+                                    {% endfor %}
+                                    {% for name, value in displayed_model_params.items %}
+                                        <tr><td>{{ name }}</td><td>{{ value }}</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center my-4">
+            <button type="submit" name="run_model" class="btn btn-success btn-lg">Uruchom model</button>
+        </div>
+    </form>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm card-fixed-400">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Uruchomienia:</h5>
+                    <div class="list-group list-group-flush">
+                        {% for run in runs %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center
+                                    {% if selected_run and selected_run.run_id == run.run_id %}active{% endif %}">
+                                <a href="?run_id={{ run.run_id }}" class="text-decoration-none text-dark flex-grow-1 me-2">
+                                    <strong>Uruchomienie {{ forloop.revcounter }}</strong>
+                                    <br><small class="text-muted">{{ run.created_at|date:"Y-m-d H:i" }}</small>
+                                </a>
+                                <form method="post" action="{% url 'ml:delete_run' %}" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="run_to_delete" value="{{ run.run_id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Czy na pewno chcesz usunąć ten przebieg?');">&times;</button>
+                                </form>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">Brak uruchomień</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm card-fixed-400">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Wynik uruchomienia:</h5>
+                    <div class="bg-light p-3">
+                        {% if selected_run %}
+                            <table class="table table-sm">
+                                {% for key, value in selected_run.metrics.items %}
+                                    {% if key != 'plots_base64' %}
+                                    <tr><td><strong>{{ key }}:</strong></td><td>{{ value }}</td></tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </table>
+                        {% else %}
+                            <p>Wybierz uruchomienie z listy 'Uruchomienia' aby zobaczyć wyniki</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
