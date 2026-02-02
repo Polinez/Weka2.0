@@ -10,12 +10,75 @@ from django.conf import settings
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-
 from django.db.models import Max
 
 from data.models import Dataset
 from data.services import load_dataset_dataframe, get_target_column_name
 from .models import PreprocessingPipeline, PreprocessingStep, PreprocessingType
+
+
+def get_feature_metadata(df: pd.DataFrame, feature_name: str) -> dict | None:
+    """Returns metadata for frontend display (type, missing values, etc)."""
+    if not feature_name or feature_name not in df.columns:
+        return None
+        
+    col_series = df[feature_name]
+    col_type = col_series.dtype
+    is_numeric = pd.api.types.is_numeric_dtype(col_type)
+    
+    return {
+        'name': feature_name,
+        'dtype': str(col_type),
+        'is_numeric': is_numeric,
+        'is_categorical': not is_numeric,
+        'missing_count': int(col_series.isnull().sum()),
+    }
+
+
+def handle_preprocessing_request(pipeline: PreprocessingPipeline, feature: str, operation: str, post_data: dict) -> tuple[str | None, str]:
+    """
+    Parses UI request, validates constraints (e.g. target col), and applies step.
+    Returns: (error_message, success_message)
+    """
+    # 1. Security against deleting target column
+    target_col = get_target_column_name(pipeline.dataset)
+    if operation == 'delete' and feature == target_col:
+        return f"Nie można usunąć kolumny docelowej '{feature}'.", ""
+
+    # 2. Mapping names from form to backend
+    type_map = {
+        'impute': ('Imputation', lambda: {'method': post_data.get('imputation_method', 'mean')}),
+        'encode': ('Encoding', lambda: {'method': post_data.get('encoding_method', 'label_encoder')}),
+        'scale': ('Scaling', lambda: {'method': post_data.get('scaling_method', 'standardization')}),
+        'delete': ('DropColumn', lambda: {}),
+    }
+
+    step_type_name, params_fn = type_map.get(operation, (None, None))
+    if not step_type_name:
+        return "Nieznana operacja.", ""
+
+    params = params_fn()
+    
+    # 3. Calling business logic
+    err = apply_preprocessing_step(pipeline, step_type_name, feature, params)
+    
+    if err:
+        return err, ""
+        
+    # 4. Generating success message (Polish names)
+    pol_names = {
+        'mean': 'Średnia', 'median': 'Mediana', 'mode': 'Najczęstsza wartość',
+        'label_encoder': 'Kodowanie etykiet', 'one_hot_encoder': 'Kodowanie binarne (One-Hot)',
+        'standardization': 'Standaryzacja (Z-score)', 'normalization': 'Normalizacja (Min-Max)'
+    }
+    
+    if operation == 'delete':
+        msg = f"Usunięto kolumnę '{feature}'"
+    else:
+        method_name = pol_names.get(params.get('method', ''), operation)
+        msg = f"{method_name} na '{feature}'"
+        
+    return None, msg
 
 
 def get_or_create_active_pipeline(dataset: Dataset, split_config: dict) -> PreprocessingPipeline:

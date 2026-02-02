@@ -4,20 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 
-import pandas as pd
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
-import numpy as np
-
-from data.models import Dataset
-from data.services import load_dataset_dataframe, get_target_column_name
-from preprocessing.models import PreprocessingType
+from data.services import load_dataset_dataframe
 from preprocessing.services import (
-    get_or_create_active_pipeline,
     get_train_test_dataframes,
-    apply_preprocessing_step,
     reset_pipeline,
-    execute_pipeline_steps,
+    get_feature_metadata,
+    handle_preprocessing_request
 )
 from .utils import load_dataset_and_pipeline_from_session
 
@@ -45,103 +37,86 @@ def preprocess(request):
         messages.error(request, "Brak aktywnego pipeline. Skonfiguruj zadanie w Konfiguracja.")
         return redirect("data:set_target", dataset_id=dataset.dataset_id)
 
+    # 1. Loading data 
     try:
-        df_train, df_test = get_train_test_dataframes(pipeline)
-        if df_train is None:
-            full_df = load_dataset_dataframe(dataset)
-        else:
-            full_df = df_train
+        df_train, _ = get_train_test_dataframes(pipeline) or (None, None)
+        full_df = df_train if df_train is not None else load_dataset_dataframe(dataset)
     except Exception as e:
-        messages.error(request, f"Błąd odczytu danych: {e}")
+        messages.error(request, f"Błąd spójności danych: {e}")
         return redirect("data:load_data")
 
+    # 2. Handling Feature Selection (POST)
     if request.method == 'POST':
         selected_feature = request.POST.get('feature')
         request.session['selected_feature'] = selected_feature or None
         return redirect('ml:preprocess')
 
-    data_for_table = full_df.head().values.tolist()
-    columns = full_df.columns.tolist()
-    history = [s.type.name + ": " + str(s.parameters) for s in pipeline.steps.all().order_by('order')]
-
-    context = {
-        "dataset": dataset,
-        "data": data_for_table,
-        "columns": columns,
-        "preprocessing_history": history,
-        "selected_feature_name": None,
-        "selected_feature_metadata": None,
-    }
-
+    # 3. Getting current selection from Session
     selected_feature_name = request.session.get('selected_feature')
-    if selected_feature_name and selected_feature_name in full_df.columns:
-        col_series = full_df[selected_feature_name]
-        col_type = col_series.dtype
-        is_numeric = pd.api.types.is_numeric_dtype(col_type)
-        context['selected_feature_name'] = selected_feature_name
-        context['selected_feature_metadata'] = {
-            'name': selected_feature_name,
-            'dtype': str(col_type),
-            'is_numeric': is_numeric,
-            'is_categorical': not is_numeric,
-            'missing_count': int(col_series.isnull().sum()),
-        }
 
-    return render(request, "preprocess.html", context)
+    # 4. UI validation: If column in session doesn't exist in data (because it was deleted), clear it.
+    if selected_feature_name and selected_feature_name not in full_df.columns:
+        selected_feature_name = None
+        request.session['selected_feature'] = None
+
+    # 5. Getting metadata (Stateless - calculated on the fly)
+    feature_metadata = get_feature_metadata(full_df, selected_feature_name)
+    
+    # History: Always fetched from DATABASE
+    history = [
+        f"{s.type.name}: {s.parameters}" 
+        for s in pipeline.steps.all().order_by('order')
+    ]
+
+    return render(request, "preprocess.html", {
+        "dataset": dataset,
+        "data": full_df.head().values.tolist(),
+        "columns": full_df.columns.tolist(),
+        "preprocessing_history": history,
+        "selected_feature_name": selected_feature_name,
+        "selected_feature_metadata": feature_metadata,
+    })
 
 
 @login_required
+@require_POST
 def preprocess_apply(request):
     """Apply preprocessing step."""
-    if request.method != 'POST':
-        return redirect('ml:preprocess')
-
+    # 1. Context consistency
     result = load_dataset_and_pipeline_from_session(request)
     if not isinstance(result, tuple):
         return result
     dataset, pipeline = result
 
-    if not pipeline:
-        messages.error(request, "Brak aktywnego pipeline.")
-        return redirect("data:set_target", dataset_id=dataset.dataset_id)
-
+    # 2. Getting parameters from UI/Session
     selected_feature = request.session.get('selected_feature')
-    if not selected_feature:
-        messages.error(request, "Nie wybrano żadnej cechy!")
-        return redirect('ml:preprocess')
-
     operation = request.POST.get('apply_operation')
-    if not operation:
-        messages.warning(request, "Nie wybrano operacji.")
+
+    if not selected_feature or not operation:
+        messages.warning(request, "Nie wybrano cechy lub operacji.")
         return redirect('ml:preprocess')
 
-    type_map = {
-        'impute': ('Imputation', lambda: {'method': request.POST.get('imputation_method', 'mean')}),
-        'encode': ('Encoding', lambda: {'method': request.POST.get('encoding_method', 'label_encoder')}),
-        'scale': ('Scaling', lambda: {'method': request.POST.get('scaling_method', 'standardization')}),
-        'delete': ('DropColumn', lambda: {}),
-    }
-    step_type_name, params_fn = type_map.get(operation, (None, None))
-    if not step_type_name:
-        messages.warning(request, "Nieznana operacja.")
-        return redirect('ml:preprocess')
+    # 3. Delegation to Service (Transactionality)
+    # Service will handle:
+    # a) Checking if operation is legal
+    # b) Updating DATABASE (adding step)
+    # c) Updating FILES on disk
+    # d) Updating DATABASE (new file paths)
+    error_msg, success_msg = handle_preprocessing_request(
+        pipeline=pipeline,
+        feature=selected_feature,
+        operation=operation,
+        post_data=request.POST
+    )
 
-    target_col = get_target_column_name(dataset)
-    if operation == 'delete' and selected_feature == target_col:
-        messages.error(request, f"Nie można usunąć kolumny docelowej '{selected_feature}'.")
-        return redirect('ml:preprocess')
+    if error_msg:
+        messages.error(request, error_msg)
+    else:
+        messages.success(request, success_msg)
+        # If operation changed structure (deleting), update UI in session
+        if operation == 'delete':
+            request.session['selected_feature'] = None
 
-    params = params_fn()
-    err = apply_preprocessing_step(pipeline, step_type_name, selected_feature, params)
-    if err:
-        messages.error(request, err)
-        return redirect('ml:preprocess')
-
-    history_entry = POL_NAMES.get(params.get('method', ''), operation) + f" na '{selected_feature}'"
-    if operation == 'delete':
-        history_entry = f"Usunięto kolumnę '{selected_feature}'"
-        request.session['selected_feature'] = None
-    messages.success(request, history_entry)
     return redirect('ml:preprocess')
 
 
@@ -152,14 +127,13 @@ def preprocess_reset(request):
     result = load_dataset_and_pipeline_from_session(request)
     if not isinstance(result, tuple):
         return result
-    dataset, pipeline = result
+    _, pipeline = result # Dataset is not needed here
 
     if pipeline:
+        # Service clears files and records in DATABASE
         reset_pipeline(pipeline)
+        # I only clear the UI state
         request.session['selected_feature'] = None
         messages.info(request, "Przywrócono stan danych sprzed preprocessingu.")
-    else:
-        messages.error(request, "Brak pipeline do resetowania.")
-        return redirect("data:load_data")
-
+    
     return redirect('ml:preprocess')
