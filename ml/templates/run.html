@@ -81,7 +81,15 @@
         <div class="col-md-8">
             <div class="card shadow-sm card-fixed-400">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Wynik uruchomienia:</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Wynik uruchomienia:</h5>
+                        {% if selected_run and selected_run.model_binary_path %}
+                            <a href="{% url 'ml:download_model' selected_run.run_id %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-download"></i> Pobierz Model (.joblib)
+                            </a>
+                        {% endif %}
+                    </div>
+
                     <div class="bg-light p-3">
                         {% if selected_run %}
                             <table class="table table-sm">
@@ -101,3 +109,4 @@
     </div>
 
 {% endblock %}
+

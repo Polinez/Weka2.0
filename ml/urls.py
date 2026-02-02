@@ -15,5 +15,6 @@ urlpatterns = [
     path("models/", models_views.models, name="models"),
     path("run/", run_views.run_model, name="run_model"),
     path('run/delete/', run_views.delete_run, name='delete_run'),
+    path('run/download/<uuid:run_id>/', run_views.download_model, name='download_model'),
     path("visualize/", visualize_views.visualize, name="visualize"),
 ]

@@ -1,4 +1,7 @@
 """ML run views."""
+import os
+from django.http import FileResponse, Http404
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -101,3 +104,22 @@ def delete_run(request):
         messages.success(request, "Przebieg usunięty.")
         
     return redirect('ml:run_model')
+
+@login_required
+def download_model(request, run_id):
+    """Serve the model binary file for download."""
+    run = get_object_or_404(MLRun, run_id=run_id, user=request.user)
+    
+    if not run.model_binary_path:
+        raise Http404("Ten przebieg nie posiada zapisanego modelu.")
+
+    file_path = os.path.join(settings.MEDIA_ROOT, run.model_binary_path)
+    
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True)
+        # Giving a nice filename: model_RandomForest_runID.joblib
+        filename = f"model_{run.model.name.replace(' ', '_')}_{run.run_id}.joblib"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    
+    raise Http404("Plik modelu nie istnieje na serwerze.")
