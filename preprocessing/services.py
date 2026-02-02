@@ -45,7 +45,11 @@ def handle_preprocessing_request(pipeline: PreprocessingPipeline, feature: str, 
     if operation == 'delete' and feature == target_col:
         return f"Nie można usunąć kolumny docelowej '{feature}'.", ""
 
-    # 2. Mapping names from form to backend
+    # 2. Security against scaling target column
+    if operation == 'scale' and feature == target_col:
+        return f"Nie można skalować kolumny docelowej '{feature}'. Zmieniłoby to wartości predykcji i utrudniło interpretację wyników.", ""
+
+    # 3. Mapping names from form to backend
     type_map = {
         'impute': ('Imputation', lambda: {'method': post_data.get('imputation_method', 'mean')}),
         'encode': ('Encoding', lambda: {'method': post_data.get('encoding_method', 'label_encoder')}),
@@ -59,13 +63,13 @@ def handle_preprocessing_request(pipeline: PreprocessingPipeline, feature: str, 
 
     params = params_fn()
     
-    # 3. Calling business logic
+    # 4. Calling business logic
     err = apply_preprocessing_step(pipeline, step_type_name, feature, params)
     
     if err:
         return err, ""
         
-    # 4. Generating success message (Polish names)
+    # 5. Generating success message (Polish names)
     pol_names = {
         'mean': 'Średnia', 'median': 'Mediana', 'mode': 'Najczęstsza wartość',
         'label_encoder': 'Kodowanie etykiet', 'one_hot_encoder': 'Kodowanie binarne (One-Hot)',
