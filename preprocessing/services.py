@@ -9,6 +9,7 @@ import pandas as pd
 from django.conf import settings
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
+from sklearn.model_selection import train_test_split
 
 from django.db.models import Max
 
@@ -42,7 +43,6 @@ def get_data_source_path(pipeline: PreprocessingPipeline) -> str | None:
 
 def split_dataframe(df: pd.DataFrame, split_config: dict, target_col: str | None):
     """Split df into train/test using split_config (Centralized Logic)."""
-    from sklearn.model_selection import train_test_split
     test_size = split_config.get('test_size', 0.2)
     random_state = split_config.get('random_state', 42)
     
@@ -116,7 +116,7 @@ def execute_pipeline_steps(pipeline: PreprocessingPipeline) -> tuple[pd.DataFram
     target_col = get_target_column_name(dataset)
 
     df = load_dataset_dataframe(dataset)
-    df_train, df_test = _split_dataframe(df, split_config, target_col)
+    df_train, df_test = split_dataframe(df, split_config, target_col)
 
     steps = pipeline.steps.all().order_by('order')
     for step in steps:

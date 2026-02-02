@@ -26,6 +26,38 @@ def plot_to_base64(fig):
             plt.close(fig)
 
 
+def generate_exploration_histogram(df: pd.DataFrame, column: str) -> str | None:
+    """
+    Generates a histogram for a specific column in the dataframe.
+    """
+    if not column or column not in df.columns:
+        return None
+
+    # Creating figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Checking data logic
+    if not pd.api.types.is_numeric_dtype(df[column]):
+        ax.text(0.5, 0.5, f"Kolumna '{column}' jest nienumeryczna", 
+                ha='center', va='center', fontsize=13)
+        ax.axis('off')
+    else:
+        # Drawing histogram
+        data_to_plot = df[column].dropna()
+        if data_to_plot.empty:
+             ax.text(0.5, 0.5, "Brak danych do wyświetlenia", ha='center', va='center')
+        else:
+            ax.hist(data_to_plot, bins=30, alpha=0.6, label=column, edgecolor='black', linewidth=1)
+            ax.set_title("Rozkład cechy")
+            ax.set_xlabel(column)
+            ax.set_ylabel("Liczba wystąpień")
+            ax.legend()
+            ax.grid(alpha=0.3)
+
+    # Conversion to Base64 using helper
+    return plot_to_base64(fig)
+
+
 def generate_classification_plots(result_data, df, target_column):
     """Generates visualizations for CLASSIFICATION."""
     plots = []
