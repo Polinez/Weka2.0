@@ -3,20 +3,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
-from django.conf import settings
-from django.core.mail import EmailMessage
 
 from core.enums import ProblemType
 from .models import Dataset
+# Importujemy zaktualizowane serwisy
 from .services import (
     validate_csv_file,
     save_uploaded_file,
     load_dataset_dataframe,
-    set_target_column,
+    configure_analysis_settings,
+    archive_dataset_and_cleanup,
+    restore_dataset_from_archive,
+    send_contact_email
 )
-from preprocessing.models import PreprocessingPipeline
-from preprocessing.services import get_or_create_active_pipeline
-
 
 PROBLEM_TYPE_CHOICES = [
     (ProblemType.CLASSIFICATION, 'Klasyfikacja (Nadzorowane)'),
@@ -54,66 +53,38 @@ def load_data(request):
 
 @login_required
 def set_target(request, dataset_id):
-    """Set target column, problem type, and create pipeline with split config."""
+    """Set target column using service logic."""
     dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
-    df = load_dataset_dataframe(dataset)
-    columns = list(df.columns)
     error = None
-    test_size = 0.2
-    random_state = 42
 
     if request.method == "POST":
-        raw_type = request.POST.get("problem_type") or request.POST.get("learning_type")
-        problem_type_map = {
-            'Classification': ProblemType.CLASSIFICATION,
-            'Regression': ProblemType.REGRESSION,
-            'Clustering': ProblemType.CLUSTERING,
-            'Dimensionality_Reduction': ProblemType.DIMENSIONALITY_REDUCTION,
-            'CLASSIFICATION': ProblemType.CLASSIFICATION,
-            'REGRESSION': ProblemType.REGRESSION,
-            'CLUSTERING': ProblemType.CLUSTERING,
-            'DIM_REDUCTION': ProblemType.DIMENSIONALITY_REDUCTION,
-        }
-        problem_type = problem_type_map.get(raw_type, raw_type)
-        target_col = request.POST.get("target_column")
         try:
-            test_size = float(request.POST.get("test_size", test_size))
-            random_state = int(request.POST.get("random_state", random_state))
-            if not 0.1 <= test_size <= 0.9:
-                raise ValueError("Rozmiar zbioru testowego musi być między 0.1 a 0.9.")
-        except ValueError as e:
-            error = f"Nieprawidłowe parametry podziału: {e}"
+            # Use service to configure analysis settings
+            pipeline_id, split_config = configure_analysis_settings(dataset, request.POST)
 
-        if problem_type in [ProblemType.REGRESSION, ProblemType.CLASSIFICATION]:
-            if not target_col:
-                error = "Kolumna decyzyjna jest wymagana dla Regresji i Klasyfikacji."
-            elif target_col not in columns:
-                error = "Wybrana kolumna decyzyjna jest nieprawidłowa."
-
-        if not error:
-            dataset.problem_type = problem_type
-            dataset.save()
-            set_target_column(dataset, target_col)
-
-            split_config = {'test_size': test_size, 'random_state': random_state}
-            pipeline = get_or_create_active_pipeline(dataset, split_config)
-            pipeline.split_config = split_config
-            pipeline.save()
-
+            # session settings
             request.session['dataset_id'] = str(dataset.dataset_id)
-            request.session['pipeline_id'] = pipeline.id
+            request.session['pipeline_id'] = pipeline_id
             request.session['split_config'] = split_config
 
-            messages.success(request, f"Konfiguracja zapisana. Możesz przejść do ML Studio.")
+            messages.success(request, "Konfiguracja zapisana. Możesz przejść do ML Studio.")
             return redirect("data:load_data")
+        except ValueError as e:
+            error = str(e)
+        except Exception as e:
+            error = f"Wystąpił nieoczekiwany błąd: {str(e)}"
+
+    # Download dataframe to get columns for rendering
+    df = load_dataset_dataframe(dataset)
+    columns = list(df.columns)
 
     context = {
         "dataset": dataset,
         "columns": columns,
         "problem_type_choices": PROBLEM_TYPE_CHOICES,
         "error": error,
-        "default_test_size": test_size,
-        "default_random_state": random_state,
+        "default_test_size": 0.2,
+        "default_random_state": 42,
     }
     return render(request, "decisionColumn.html", context)
 
@@ -125,10 +96,7 @@ def delete_dataset(request, dataset_id):
     """
     if request.method == 'POST':
         dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
-        dataset.pipelines.all().delete() # Clean train/test files in media/pipelines/
-        dataset.runs.all().delete()      # Clean model files .joblib in media/models/
-        dataset.is_archived = True
-        dataset.save()
+        archive_dataset_and_cleanup(dataset)
         messages.success(request, "Zbiór został przeniesiony do archiwum.")
     return redirect('data:load_data')
 
@@ -140,35 +108,27 @@ def restore_dataset(request, dataset_id):
     """
     dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
     if request.method == 'POST':
-        dataset.is_archived = False
-        dataset.save()
+        restore_dataset_from_archive(dataset)
         messages.success(request, f"Zbiór '{dataset.name}' został przywrócony.")
     return redirect('data:load_data')
 
 
 def contact(request):
-    """Handle contact form submission."""
+    """Handle contact form."""
     context = {}
     if request.method == 'POST':
-        name = request.POST.get('name')
-        email_from_user = request.POST.get('email')
-        message = request.POST.get('message')
-        if all([name, email_from_user, message]):
-            try:
-                email_msg = EmailMessage(
-                    subject=f'Error on site from {name}',
-                    body=f"Od: {name}\nEmail zwrotny: {email_from_user}\n\nTreść wiadomości:\n{message}",
-                    from_email=settings.EMAIL_HOST_USER,
-                    to=['sebastian.wandzel@uekat.edu.pl'],
-                    reply_to=[email_from_user]
-                )
-                email_msg.send()
-                context['success'] = True
-            except Exception as e:
-                print(f"BŁĄD WYSYŁANIA EMAILA: {e}")
-                context['error'] = 'Failed to send email.'
-        else:
-            context['error'] = 'Please fill in all fields.'
+        try:
+            send_contact_email(
+                name=request.POST.get('name'),
+                email_from=request.POST.get('email'),
+                message=request.POST.get('message')
+            )
+            context['success'] = True
+        except ValueError as e:
+            context['error'] = str(e)
+        except Exception:
+            context['error'] = 'Failed to send email.'
+
     return render(request, 'contact.html', context)
 
 

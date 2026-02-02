@@ -1,12 +1,16 @@
 """Data management services."""
 import io
 import mimetypes
+import os
 import uuid
 from pathlib import Path
 
 import pandas as pd
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.core.mail import EmailMessage
+from core.enums import ProblemType
 
 from .models import Dataset, DatasetColumn
 
@@ -66,7 +70,8 @@ def save_uploaded_file(user: User, uploaded_file, df: pd.DataFrame) -> Dataset:
         raise # Raise error to view to handle it
 
 def infer_and_save_columns(dataset: Dataset, df: pd.DataFrame) -> None:
-    """Infers column types and creates DatasetColumn records."""
+    """Infers column types and creates DatasetColumn records.
+        Saves type of each column as 'numeric', 'categorical', or 'datetime'."""
     DatasetColumn.objects.filter(dataset=dataset).delete()
     for col in df.columns:
         dtype = df[col].dtype
@@ -83,12 +88,74 @@ def infer_and_save_columns(dataset: Dataset, df: pd.DataFrame) -> None:
             is_target=False,
         )
 
-
 def load_dataset_dataframe(dataset: Dataset, file_path_override: str = None) -> pd.DataFrame:
     """Loads DataFrame from dataset file path or override."""
     path = file_path_override or dataset.file_path
     full_path = Path(settings.MEDIA_ROOT) / path
     return pd.read_csv(full_path)
+
+def set_target_column(dataset: Dataset, column_name: str | None) -> None:
+    """Sets is_target for the given column, clears others."""
+    dataset.columns.update(is_target=False)
+    if column_name:
+        dataset.columns.filter(name=column_name).update(is_target=True)
+
+def configure_analysis_settings(dataset: Dataset, post_data: dict) -> tuple:
+    """
+    Validates inputs, maps problem types, sets target, updates Dataset
+    and creates/updates PreprocessingPipeline.
+    Returns: (pipeline_id, split_config)
+    Raises: ValueError if validation fails.
+    """
+    df = load_dataset_dataframe(dataset)
+    columns = list(df.columns)
+
+    # Maps problem types from form to enum
+    raw_type = post_data.get("problem_type") or post_data.get("learning_type")
+    problem_type_map = {
+        'Classification': ProblemType.CLASSIFICATION,
+        'Regression': ProblemType.REGRESSION,
+        'Clustering': ProblemType.CLUSTERING,
+        'Dimensionality_Reduction': ProblemType.DIMENSIONALITY_REDUCTION,
+        'CLASSIFICATION': ProblemType.CLASSIFICATION,
+        'REGRESSION': ProblemType.REGRESSION,
+        'CLUSTERING': ProblemType.CLUSTERING,
+        'DIM_REDUCTION': ProblemType.DIMENSIONALITY_REDUCTION,
+    }
+    problem_type = problem_type_map.get(raw_type, raw_type)
+
+    # Download and validate parameters from form
+    target_col = post_data.get("target_column")
+    try:
+        test_size = float(post_data.get("test_size", 0.2))
+        random_state = int(post_data.get("random_state", 42))
+        if not 0.1 <= test_size <= 0.9:
+            raise ValueError("Rozmiar zbioru testowego musi być między 0.1 a 0.9.")
+    except ValueError as e:
+        raise ValueError(f"Nieprawidłowe parametry liczbowe: {e}")
+
+    # Validate target column based on problem type. Regression/Classification need target.
+    if problem_type in [ProblemType.REGRESSION, ProblemType.CLASSIFICATION]:
+        if not target_col:
+            raise ValueError("Kolumna decyzyjna jest wymagana dla Regresji i Klasyfikacji.")
+        elif target_col not in columns:
+            raise ValueError("Wybrana kolumna decyzyjna nie istnieje w zbiorze.")
+
+    # Save settings to Dataset and Pipeline
+    dataset.problem_type = problem_type
+    dataset.save()
+    set_target_column(dataset, target_col)
+
+    split_config = {'test_size': test_size, 'random_state': random_state}
+
+    # use preprocessing service to get/create pipeline
+    from preprocessing.services import get_or_create_active_pipeline
+    pipeline = get_or_create_active_pipeline(dataset, split_config)
+    pipeline.split_config = split_config
+    pipeline.save()
+
+    return pipeline.id, split_config
+
 
 
 def get_target_column_name(dataset: Dataset) -> str | None:
@@ -97,8 +164,30 @@ def get_target_column_name(dataset: Dataset) -> str | None:
     return col.name if col else None
 
 
-def set_target_column(dataset: Dataset, column_name: str | None) -> None:
-    """Sets is_target for the given column, clears others."""
-    dataset.columns.update(is_target=False)
-    if column_name:
-        dataset.columns.filter(name=column_name).update(is_target=True)
+
+
+def archive_dataset_and_cleanup(dataset: Dataset) -> None:
+    """Soft delete dataset and hard delete heavy related objects."""
+    dataset.pipelines.all().delete()
+    dataset.runs.all().delete()
+    dataset.is_archived = True
+    dataset.save()
+
+def restore_dataset_from_archive(dataset: Dataset) -> None:
+    """Restores dataset visibility."""
+    dataset.is_archived = False
+    dataset.save()
+
+def send_contact_email(name: str, email_from: str, message: str) -> None:
+    """Sends contact email to admin."""
+    if not all([name, email_from, message]):
+        raise ValueError("Wszystkie pola są wymagane.")
+
+    email_msg = EmailMessage(
+        subject=f'Error on site from {name}',
+        body=f"Od: {name}\nEmail zwrotny: {email_from}\n\nTreść wiadomości:\n{message}",
+        from_email=settings.EMAIL_HOST_USER,
+        to=['sebastian.wandzel@uekat.edu.pl'],
+        reply_to=[email_from]
+    )
+    email_msg.send()
