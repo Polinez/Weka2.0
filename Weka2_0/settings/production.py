@@ -1,5 +1,6 @@
 import os
 from .base import *
+from decouple import config
 
 
 DEBUG = False
@@ -16,8 +17,11 @@ if not SECRET_KEY:
 
 # 2. HOSTS
 allowed_hosts_env = os.environ.get("WEBSITE_HOSTNAME")
-ALLOWED_HOSTS = [allowed_hosts_env]
-CSRF_TRUSTED_ORIGINS = [f"https://{allowed_hosts_env}"]
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [allowed_hosts_env]
+    CSRF_TRUSTED_ORIGINS = [f"https://{allowed_hosts_env}"]
+else:
+    ALLOWED_HOSTS = []
 
 # 3.DATABASE
 connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
@@ -50,4 +54,4 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # 5. EMAIL
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD', default='')

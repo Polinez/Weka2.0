@@ -22,4 +22,4 @@ DATABASES = {
 
 # Email from .env
 EMAIL_HOST_USER = config('EMAIL_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_APP_PASSWORD', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD', default='')
