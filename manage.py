@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Weka2_0.settings')
+    # setting parameters locally  based on setting and in deployment from azure
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Weka2_0.settings.local')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
