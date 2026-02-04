@@ -30,7 +30,7 @@ jobs:
         env:
           SECRET_KEY: "tymczasowy-klucz-dla-githuba"
           EMAIL_USER: "dummy_user"
-          EMAIL_PASSWORD: "dummy_password"
+          EMAIL_APP_PASSWORD: "dummy_password"
         run: |
           python -m venv antenv
           source antenv/bin/activate
