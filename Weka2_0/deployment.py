@@ -19,24 +19,32 @@ MIDDLEWARE = [
 ]
 
 connection_string = os.environ.get("AZURE_POSTGRESQL_CONNECTIONSTRING")
+
 if not connection_string:
-    raise ValueError("AZURE_POSTGRESQL_CONNECTION_STRING environment variable is not set or empty.")
+    raise ValueError("AZURE_POSTGRESQL_CONNECTIONSTRING environment variable is not set or empty.")
 
-parameters = dict(pair.split('=') for pair in connection_string.split(' '))
+try:
+    parameters = dict(pair.split('=') for pair in connection_string.split(' '))
+except ValueError:
+    raise ValueError(f"Invalid connection string format: {connection_string}")
 
-required_keys = ['NAME', 'USER', 'PASSWORD', 'HOST', 'PORT']
-missing_keys = [key for key in required_keys if key not in parameters]
+required_azure_keys = ['dbname', 'user', 'password', 'host', 'port']
+missing_keys = [key for key in required_azure_keys if key not in parameters]
+
 if missing_keys:
-    raise ValueError(f"Missing required database parameters: {', '.join(missing_keys)}")
+    raise ValueError(f"Missing required database parameters from Azure: {', '.join(missing_keys)}")
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': parameters['NAME'],
-        'USER': parameters['USER'],
-        'PASSWORD': parameters['PASSWORD'],
-        'HOST': parameters['HOST'],
-        'PORT': parameters['PORT'],
+        'NAME': parameters['dbname'],
+        'USER': parameters['user'],
+        'PASSWORD': parameters['password'],
+        'HOST': parameters['host'],
+        'PORT': parameters['port'],
+        'OPTIONS': {
+            'sslmode': 'require',         
+        },
     }
 }
 
