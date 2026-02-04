@@ -1,1 +1,0 @@
-web: gunicorn Weka2_0.wsgi:application
