@@ -9,7 +9,10 @@ import pandas as pd
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.core.mail import EmailMessage
+import logging
+from django.core.mail import EmailMessage, BadHeaderError
+from smtplib import SMTPException
+
 from core.enums import ProblemType
 
 from .models import Dataset, DatasetColumn
@@ -178,16 +181,37 @@ def restore_dataset_from_archive(dataset: Dataset) -> None:
     dataset.is_archived = False
     dataset.save()
 
-def send_contact_email(name: str, email_from: str, message: str) -> None:
+def send_contact_email(name: str, user_email: str, message: str) -> None:
     """Sends contact email to admin."""
-    if not all([name, email_from, message]):
-        raise ValueError("Wszystkie pola są wymagane.")
+    logger = logging.getLogger(__name__)
 
-    email_msg = EmailMessage(
-        subject=f'Error on site from {name}',
-        body=f"Od: {name}\nEmail zwrotny: {email_from}\n\nTreść wiadomości:\n{message}",
-        from_email=settings.EMAIL_HOST_USER,
-        to=['sebastian.wandzel@uekat.edu.pl'],
-        reply_to=[email_from]
+    if not all([name, user_email, message]):
+        logger.warning("Empty message form.")
+        return False
+
+    # 2. Treść
+    subject = f'[Weka2.0] Message from {name}'
+    body = (
+        f"User: {name}\n"
+        f"Email: {user_email}\n\n"
+        f"--- Message ---\n"
+        f"{message}"
     )
-    email_msg.send()
+
+    try:
+        email_msg = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.EMAIL_HOST_USER,
+
+            to=[settings.EMAIL_HOST_USER],
+
+            reply_to=[user_email]
+        )
+
+        email_msg.send(fail_silently=False)
+        return True
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return False
