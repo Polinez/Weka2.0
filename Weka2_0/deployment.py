@@ -41,8 +41,8 @@ DATABASES = {
 }
 
 # email
-EMAIL_USER="sebastian.wandzel@edu.uekat.pl"
-EMAIL_APP_PASSWORD='jaci exso prtj tzps'
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
 
 
