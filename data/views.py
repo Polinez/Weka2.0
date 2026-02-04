@@ -117,16 +117,19 @@ def contact(request):
     """Handle contact form."""
     context = {}
     if request.method == 'POST':
-        try:
-            send_contact_email(
-                name=request.POST.get('name'),
-                email_from=request.POST.get('email'),
-                message=request.POST.get('message')
-            )
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        success = send_contact_email(
+            name=name,
+            user_email=email,
+            message=message
+        )
+
+        if success:
             context['success'] = True
-        except ValueError as e:
-            context['error'] = str(e)
-        except Exception:
+        else:
             context['error'] = 'Failed to send email.'
 
     return render(request, 'contact.html', context)
