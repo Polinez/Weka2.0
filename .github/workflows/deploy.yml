@@ -38,6 +38,8 @@ jobs:
         env:
           SECRET_KEY: "123456"
           DEBUG: "False"
+          EMAIL_USER: "dummy_email@example.com"    
+          EMAIL_APP_PASSWORD: "dummy_password"
         run: |
           python manage.py collectstatic --noinput
 
