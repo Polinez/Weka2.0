@@ -3,7 +3,7 @@ name: Build and Deploy to Azure Web App
 on:
   push:
     branches:
-      - main  # after push to main branch, the workflow will be triggered
+      - deploy  # after push to deploy branch, the workflow will be triggered
   workflow_dispatch:
 
 jobs:
@@ -33,19 +33,10 @@ jobs:
 
       # optionally: you can add a step to run tests (python manage.py test)
 
-      # 
-      - name: Collect Static Files
-        env:
-          SECRET_KEY: "123456"
-          DEBUG: "False"
-          EMAIL_USER: "dummy_email@example.com"    
-          EMAIL_APP_PASSWORD: "dummy_password"
-        run: |
-          python manage.py collectstatic --noinput
 
       # zip the artifact for deployment
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "release.zip" "./zz-extras" "./datasets"
+        run: zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "release.zip" "zz-extras/*" "datasets/*" "media/datasets/*" "media/models/*" "media/pipelines/*"
 
       # upload the artifact for deployment jobs
       - name: Upload artifact for deployment jobs
