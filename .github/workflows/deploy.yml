@@ -35,7 +35,7 @@ jobs:
 
       # zip the artifact for deployment
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "release.zip"
+        run: zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "release.zip" "./zz-extras" "./datasets"
 
       # upload the artifact for deployment jobs
       - name: Upload artifact for deployment jobs
