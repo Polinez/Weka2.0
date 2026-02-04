@@ -33,6 +33,14 @@ jobs:
 
       # optionally: you can add a step to run tests (python manage.py test)
 
+      # 
+      - name: Collect Static Files
+        env:
+          SECRET_KEY: "123456"
+          DEBUG: "False"
+        run: |
+          python manage.py collectstatic --noinput
+
       # zip the artifact for deployment
       - name: Zip artifact for deployment
         run: zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "release.zip" "./zz-extras" "./datasets"
