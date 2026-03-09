@@ -91,53 +91,60 @@ Follow these steps to run the project locally.
 ### Prerequisites
 * Python **3.10** or higher
 * Git
+* Git Bash (recommended for Windows users to run `.sh` scripts)
 
 ### Step 1: Clone the repository
 ```bash
 git clone https://github.com/Polinez/Weka2.0.git
 cd Weka2.0
 ```
-### Step 2: Install dependencies
-It is recommended to use a virtual environment to manage dependencies:
 
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
+### Step 2: Configure Environment Variables
+Before running the application, you need to set up your local environment variables. Create a file named `.env` in the root directory of the project (at the same level as `manage.py`) and paste the following structure:
 
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
+```env
+# python 3.10.11
+
+DEBUG=True
+SECRET_KEY='your-random-secret-key-here'
+ALLOWED_HOSTS=127.0.0.1,localhost
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://localhost
+
+# Email configuration
+EMAIL_USER="your.email@example.com"
+EMAIL_PASSWORD="your-email-password"
+
+# local name of the sqlite3 database file
+DB_NAME=db.sqlite3
 ```
 
+**Where to get these values:**
+* `DEBUG`: Leave as `True` for local development. Set to `False` in production.
+* `SECRET_KEY`: A unique, unpredictable string used by Django for security. For local development, it can be any random string (e.g. `'djang24su'`). For production, generate a strong one (e.g., using `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`).
+* `ALLOWED_HOSTS` & `CSRF_TRUSTED_ORIGINS`: Leave as provided for local testing.
+* `EMAIL_USER` & `EMAIL_PASSWORD`: Used for sending emails (like password resets). Provide your SMTP server email. If you use Gmail, you must generate a special **"App Password"** in your Google Account security settings (do not use your standard login password).
+* `DB_NAME`: The default name for the SQLite database. Leave as `db.sqlite3`.
 
+### Step 3: Environment & Database Setup
+You can easily set up the whole project using the provided `ctl` script.
 
-Install the required packages:
+Initialize virtual environment and install requirements:
 ```bash
-pip install -r requirements.txt
+bash ctl env_init
 ```
 
-### Step 3: Database Setup
-Initialize the SQLite database and apply migrations:
-
+Initialize the database, run migrations, and seed initial data (Crucial step to populate ML models and preprocessing types lists):
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+bash ctl db_init
 ```
 
-### Step 4: Seed Initial Data (Crucial!)
-The application requires initial data to populate the lists of available ML models (e.g., RandomForest, SVM) and preprocessing types. Run the following command:
+*(Alternatively, you can manually create a venv, install requirements, run `makemigrations`, `migrate`, and `seed_data` using `manage.py`)*
 
-```bash
-python manage.py seed_data
-```
-*Note: This command executes the script found in `ml/management/commands/seed_data.py`. Without this step, the model selection dropdowns will be empty.*
-
-### Step 5: Run the server
+### Step 4: Run the server
 Start the local development server:
 
 ```bash
-python manage.py runserver
+bash ctl run
 ```
 
 Open your browser and navigate to: `http://127.0.0.1:8000/`
