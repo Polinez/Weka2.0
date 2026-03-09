@@ -2,13 +2,21 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
-    accuracy_score, classification_report, mean_squared_error,
-    r2_score, silhouette_score, davies_bouldin_score, f1_score, mean_absolute_error
+    accuracy_score,
+    classification_report,
+    mean_squared_error,
+    r2_score,
+    silhouette_score,
+    davies_bouldin_score,
+    f1_score,
+    mean_absolute_error,
 )
 
 
 class BaseMLModel(ABC):
-    def __init__(self, common_parameters: dict, model_parameters: dict, target_column: str):
+    def __init__(
+        self, common_parameters: dict, model_parameters: dict, target_column: str
+    ):
         self.model = None
         self.common_parameters = common_parameters
         self.model_parameters = model_parameters
@@ -21,8 +29,13 @@ class BaseMLModel(ABC):
 
     def prepare_data(self, df_train, df_test):
         if self.target_column:
-            if self.target_column not in df_train.columns or self.target_column not in df_test.columns:
-                raise ValueError(f"Kolumna docelowa '{self.target_column}' nie została znaleziona w danych.")
+            if (
+                self.target_column not in df_train.columns
+                or self.target_column not in df_test.columns
+            ):
+                raise ValueError(
+                    f"Kolumna docelowa '{self.target_column}' nie została znaleziona w danych."
+                )
             self.X_train = df_train.drop(columns=[self.target_column])
             self.y_train = df_train[self.target_column]
             self.X_test = df_test.drop(columns=[self.target_column])
@@ -67,11 +80,13 @@ class BaseClassificationModel(BaseMLModel):
 
     def evaluate_model(self, y_pred):
         accuracy = accuracy_score(self.y_test, y_pred)
-        f1 = f1_score(self.y_test, y_pred, average='weighted', zero_division=0)
-        report = classification_report(self.y_test, y_pred, output_dict=True, zero_division=0)
+        f1 = f1_score(self.y_test, y_pred, average="weighted", zero_division=0)
+        report = classification_report(
+            self.y_test, y_pred, output_dict=True, zero_division=0
+        )
         y_pred_proba = None
         try:
-            if hasattr(self.model, 'predict_proba'):
+            if hasattr(self.model, "predict_proba"):
                 y_pred_proba = self.model.predict_proba(self.X_test)
         except Exception:
             pass
@@ -82,7 +97,7 @@ class BaseClassificationModel(BaseMLModel):
             "classification_report": report,
             "y_test": self.y_test.tolist(),
             "y_pred": y_pred.tolist(),
-            "y_pred_proba": y_pred_proba.tolist() if y_pred_proba is not None else None
+            "y_pred_proba": y_pred_proba.tolist() if y_pred_proba is not None else None,
         }
 
 
@@ -103,12 +118,14 @@ class BaseRegressionModel(BaseMLModel):
             "mean_squared_error": mse,
             "r2_score": r2,
             "y_test": self.y_test.tolist(),
-            "y_pred": y_pred.tolist()
+            "y_pred": y_pred.tolist(),
         }
 
 
 class BaseUnsupervisedModel(BaseMLModel):
-    def __init__(self, common_parameters: dict, model_parameters: dict, target_column: str = None):
+    def __init__(
+        self, common_parameters: dict, model_parameters: dict, target_column: str = None
+    ):
         super().__init__(common_parameters, model_parameters, target_column=None)
 
     def prepare_data(self, df_train):
@@ -141,7 +158,7 @@ class BaseUnsupervisedModel(BaseMLModel):
             "labels": labels.tolist() if labels is not None else [],
             "number_of_clusters": len(np.unique(labels)) if labels is not None else 0,
             "silhouette_score": silhouette,
-            "davies_bouldin_score": db_score
+            "davies_bouldin_score": db_score,
         }
 
     def run(self, df_train, df_test):
@@ -153,7 +170,9 @@ class BaseUnsupervisedModel(BaseMLModel):
 
 
 class BaseDimensionalityReduction(BaseMLModel):
-    def __init__(self, common_parameters: dict, model_parameters: dict, target_column: str = None):
+    def __init__(
+        self, common_parameters: dict, model_parameters: dict, target_column: str = None
+    ):
         super().__init__(common_parameters, model_parameters, target_column=None)
 
     def train_model(self):
@@ -167,9 +186,15 @@ class BaseDimensionalityReduction(BaseMLModel):
         total_explained_variance = sum(explained_variance_ratio_)
         return {
             "model_type": "Dimensionality Reduction",
-            "original_features": self.X_train.shape[1] if self.X_train is not None else 0,
-            "reduced_features": X_transformed.shape[1] if X_transformed is not None else 0,
+            "original_features": (
+                self.X_train.shape[1] if self.X_train is not None else 0
+            ),
+            "reduced_features": (
+                X_transformed.shape[1] if X_transformed is not None else 0
+            ),
             "total_explained_variance": total_explained_variance,
             "explained_variance_per_component": explained_variance_ratio_.tolist(),
-            "transformed_data_sample": X_transformed[:5].tolist() if X_transformed is not None else []
+            "transformed_data_sample": (
+                X_transformed[:5].tolist() if X_transformed is not None else []
+            ),
         }

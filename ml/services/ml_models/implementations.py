@@ -1,9 +1,14 @@
-from .base_ml_model import BaseClassificationModel, BaseRegressionModel, BaseUnsupervisedModel,BaseDimensionalityReduction
+from .base_ml_model import (
+    BaseClassificationModel,
+    BaseRegressionModel,
+    BaseUnsupervisedModel,
+    BaseDimensionalityReduction,
+)
 
 # draw plots
 from ml.services.plot_service import plot_to_base64
 import matplotlib
-matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from sklearn import tree
 from sklearn.base import clone
@@ -23,32 +28,34 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.decomposition import PCA
 
+matplotlib.use("Agg")
 
 # ===============================================
 # Classification Models (BaseClassificationModel)
 # ===============================================
 
+
 class LogisticRegressionModel(BaseClassificationModel):
     def create_model(self):
         # Setting max_iter high to ensure convergence, as it might not be in the simplified UI parameters.
-        self.model_parameters.setdefault('max_iter', 1000)
-        if 'class_weight' in self.model_parameters:
-            value = self.model_parameters['class_weight']
-            if value == 'None' or value == '':
-                self.model_parameters['class_weight'] = None
+        self.model_parameters.setdefault("max_iter", 1000)
+        if "class_weight" in self.model_parameters:
+            value = self.model_parameters["class_weight"]
+            if value == "None" or value == "":
+                self.model_parameters["class_weight"] = None
         self.model = LogisticRegression(**self.model_parameters)
 
 
 class DecisionTreeClassificationModel(BaseClassificationModel):
     def create_model(self):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
-        if self.model_parameters.get('max_depth') == 0:
-            self.model_parameters['max_depth'] = None
+        if self.model_parameters.get("max_depth") == 0:
+            self.model_parameters["max_depth"] = None
         # Convert "None" to None for class_weight
-        if 'class_weight' in self.model_parameters:
-            value = self.model_parameters['class_weight']
-            if value == 'None' or value == '':
-                self.model_parameters['class_weight'] = None
+        if "class_weight" in self.model_parameters:
+            value = self.model_parameters["class_weight"]
+            if value == "None" or value == "":
+                self.model_parameters["class_weight"] = None
         self.model = DecisionTreeClassifier(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -67,36 +74,38 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
                 filled=True,
                 rounded=True,
                 ax=ax,
-                fontsize=10
+                fontsize=10,
             )
 
-            evaluation['plot_tree_base64'] = plot_to_base64(fig)
+            evaluation["plot_tree_base64"] = plot_to_base64(fig)
 
         except Exception as e:
             print(f"Błąd podczas rysowania drzewa decyzyjnego: {e}")
-            evaluation['plot_tree_base64'] = None
+            evaluation["plot_tree_base64"] = None
 
         # Feature Importance Plot
         try:
             feature_importance = self.model.feature_importances_
             feature_names = self.X_train.columns.tolist()
-            
+
             # Sort features by importance
             indices = np.argsort(feature_importance)[::-1]
             sorted_features = [feature_names[i] for i in indices]
             sorted_importance = feature_importance[indices]
-            
+
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
-            ax.set_xlabel('Ważność cechy')
-            ax.set_ylabel('Cecha')
-            ax.set_title('Ważność cech - Drzewo Decyzyjne (Klasyfikacja)')
-            ax.grid(axis='x', alpha=0.3)
-            
-            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+            sns.barplot(
+                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+            )
+            ax.set_xlabel("Ważność cechy")
+            ax.set_ylabel("Cecha")
+            ax.set_title("Ważność cech - Drzewo Decyzyjne (Klasyfikacja)")
+            ax.grid(axis="x", alpha=0.3)
+
+            evaluation["plot_feature_importance"] = plot_to_base64(fig)
         except Exception as e:
             print(f"Błąd podczas rysowania ważności cech: {e}")
-            evaluation['plot_feature_importance'] = None
+            evaluation["plot_feature_importance"] = None
 
         return evaluation
 
@@ -129,7 +138,6 @@ class KNNClassifierModel(BaseClassificationModel):
                     x_label = "Główna Składowa 1 (PC1)"
                     y_label = "Główna Składowa 2 (PC2)"
 
-
                     pca = PCA(n_components=2)
                     X_plot = pca.fit_transform(self.X_train.values)
 
@@ -144,24 +152,29 @@ class KNNClassifierModel(BaseClassificationModel):
                 if len(y_numeric) > PLOT_SAMPLE_SIZE:
                     try:
                         from sklearn.model_selection import train_test_split
+
                         X_plot_sample, _, y_numeric_sample, _ = train_test_split(
-                            X_plot, y_numeric,
+                            X_plot,
+                            y_numeric,
                             train_size=PLOT_SAMPLE_SIZE,
-                            stratify=y_numeric
+                            stratify=y_numeric,
                         )
                     except ValueError:
-                        indices = np.random.choice(len(y_numeric), PLOT_SAMPLE_SIZE, replace=False)
+                        indices = np.random.choice(
+                            len(y_numeric), PLOT_SAMPLE_SIZE, replace=False
+                        )
                         X_plot_sample = X_plot[indices]
                         y_numeric_sample = y_numeric[indices]
                 else:
                     X_plot_sample = X_plot
                     y_numeric_sample = y_numeric
 
-                h = .15
+                h = 0.15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
                 y_min, y_max = X_plot[:, 1].min() - 1, X_plot[:, 1].max() + 1
-                xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                                     np.arange(y_min, y_max, h))
+                xx, yy = np.meshgrid(
+                    np.arange(x_min, x_max, h), np.arange(y_min, y_max, h)
+                )
 
                 Z = plot_model.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
@@ -173,32 +186,40 @@ class KNNClassifierModel(BaseClassificationModel):
 
                 fig, ax = plt.subplots(figsize=(10, 8))
                 ax.contourf(xx, yy, Z, cmap=cmap_light)
-                sns.scatterplot(x=X_plot[:, 0], y=X_plot[:, 1], hue=y_plot,
-                                palette=palette_bold, ax=ax, edgecolor="k")
+                sns.scatterplot(
+                    x=X_plot[:, 0],
+                    y=X_plot[:, 1],
+                    hue=y_plot,
+                    palette=palette_bold,
+                    ax=ax,
+                    edgecolor="k",
+                )
 
                 ax.set_xlabel(x_label)
                 ax.set_ylabel(y_label)
                 ax.set_title(plot_title)
 
-                evaluation['plot_knn_decision_boundary'] = plot_to_base64(fig)
+                evaluation["plot_knn_decision_boundary"] = plot_to_base64(fig)
 
             else:
-                print(f"Wizualizacja granic KNN pominięta: wymaga co najmniej 2 cech, znaleziono {n_features}")
-                evaluation['plot_knn_decision_boundary'] = None
+                print(
+                    f"Wizualizacja granic KNN pominięta: wymaga co najmniej 2 cech, znaleziono {n_features}"
+                )
+                evaluation["plot_knn_decision_boundary"] = None
 
         except Exception as e:
             print(f"Błąd podczas rysowania granic decyzyjnych KNN: {e}")
-            evaluation['plot_knn_decision_boundary'] = None
+            evaluation["plot_knn_decision_boundary"] = None
 
         return evaluation
 
 
 class SVCModel(BaseClassificationModel):
     def create_model(self):
-        if 'class_weight' in self.model_parameters:
-            value = self.model_parameters['class_weight']
-            if value == 'None' or value == '':
-                self.model_parameters['class_weight'] = None
+        if "class_weight" in self.model_parameters:
+            value = self.model_parameters["class_weight"]
+            if value == "None" or value == "":
+                self.model_parameters["class_weight"] = None
         self.model = SVC(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -212,8 +233,8 @@ class SVCModel(BaseClassificationModel):
         try:
             n_features = self.X_train.shape[1]
 
-            kernel = self.model_parameters.get('kernel', 'rbf')
-            C = self.model_parameters.get('C', 1.0)
+            kernel = self.model_parameters.get("kernel", "rbf")
+            C = self.model_parameters.get("C", 1.0)
             plot_title = f"Granice Decyzyjne SVC (kernel={kernel}, C={C})"
 
             if n_features >= 2:
@@ -243,24 +264,29 @@ class SVCModel(BaseClassificationModel):
                 if len(y_numeric) > PLOT_SAMPLE_SIZE:
                     try:
                         from sklearn.model_selection import train_test_split
+
                         X_plot_sample, _, y_numeric_sample, _ = train_test_split(
-                            X_plot, y_numeric,
+                            X_plot,
+                            y_numeric,
                             train_size=PLOT_SAMPLE_SIZE,
-                            stratify=y_numeric
+                            stratify=y_numeric,
                         )
                     except ValueError:
-                        indices = np.random.choice(len(y_numeric), PLOT_SAMPLE_SIZE, replace=False)
+                        indices = np.random.choice(
+                            len(y_numeric), PLOT_SAMPLE_SIZE, replace=False
+                        )
                         X_plot_sample = X_plot[indices]
                         y_numeric_sample = y_numeric[indices]
                 else:
                     X_plot_sample = X_plot
                     y_numeric_sample = y_numeric
 
-                h = .15
+                h = 0.15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
                 y_min, y_max = X_plot[:, 1].min() - 1, X_plot[:, 1].max() + 1
-                xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                                     np.arange(y_min, y_max, h))
+                xx, yy = np.meshgrid(
+                    np.arange(x_min, x_max, h), np.arange(y_min, y_max, h)
+                )
 
                 Z = plot_model.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
@@ -272,22 +298,30 @@ class SVCModel(BaseClassificationModel):
 
                 fig, ax = plt.subplots(figsize=(10, 8))
                 ax.contourf(xx, yy, Z, cmap=cmap_light)
-                sns.scatterplot(x=X_plot[:, 0], y=X_plot[:, 1], hue=y_plot,
-                                palette=palette_bold, ax=ax, edgecolor="k")
+                sns.scatterplot(
+                    x=X_plot[:, 0],
+                    y=X_plot[:, 1],
+                    hue=y_plot,
+                    palette=palette_bold,
+                    ax=ax,
+                    edgecolor="k",
+                )
 
                 ax.set_xlabel(x_label)
                 ax.set_ylabel(y_label)
                 ax.set_title(plot_title)
 
-                evaluation['plot_svc_decision_boundary'] = plot_to_base64(fig)
+                evaluation["plot_svc_decision_boundary"] = plot_to_base64(fig)
 
             else:
-                print(f"Wizualizacja granic SVC pominięta: wymaga co najmniej 2 cech, znaleziono {n_features}")
-                evaluation['plot_svc_decision_boundary'] = None
+                print(
+                    f"Wizualizacja granic SVC pominięta: wymaga co najmniej 2 cech, znaleziono {n_features}"
+                )
+                evaluation["plot_svc_decision_boundary"] = None
 
         except Exception as e:
             print(f"Błąd podczas rysowania granic decyzyjnych SVC: {e}")
-            evaluation['plot_svc_decision_boundary'] = None
+            evaluation["plot_svc_decision_boundary"] = None
 
         return evaluation
 
@@ -300,13 +334,13 @@ class NaiveBayesModel(BaseClassificationModel):
 class RandomForestClassifierModel(BaseClassificationModel):
     def create_model(self):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
-        if self.model_parameters.get('max_depth') == 0:
-            self.model_parameters['max_depth'] = None
+        if self.model_parameters.get("max_depth") == 0:
+            self.model_parameters["max_depth"] = None
         # Convert "None" to None for class_weight
-        if 'class_weight' in self.model_parameters:
-            value = self.model_parameters['class_weight']
-            if value == 'None' or value == '':
-                self.model_parameters['class_weight'] = None
+        if "class_weight" in self.model_parameters:
+            value = self.model_parameters["class_weight"]
+            if value == "None" or value == "":
+                self.model_parameters["class_weight"] = None
         self.model = RandomForestClassifier(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -316,29 +350,33 @@ class RandomForestClassifierModel(BaseClassificationModel):
         try:
             feature_importance = self.model.feature_importances_
             feature_names = self.X_train.columns.tolist()
-            
+
             # Sortuj według ważności
             indices = np.argsort(feature_importance)[::-1]
             sorted_features = [feature_names[i] for i in indices]
             sorted_importance = feature_importance[indices]
-            
+
             # limit the number of features to 20
             max_features = 20
             if len(sorted_features) > max_features:
                 sorted_features = sorted_features[:max_features]
                 sorted_importance = sorted_importance[:max_features]
-            
+
             fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
-            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
-            ax.set_xlabel('Ważność cechy')
-            ax.set_ylabel('Cecha')
-            ax.set_title(f'Ważność cech - Lasy Losowe (Klasyfikacja, n_estimators={self.model.n_estimators})')
-            ax.grid(axis='x', alpha=0.3)
-            
-            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+            sns.barplot(
+                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+            )
+            ax.set_xlabel("Ważność cechy")
+            ax.set_ylabel("Cecha")
+            ax.set_title(
+                f"Ważność cech - Lasy Losowe (Klasyfikacja, n_estimators={self.model.n_estimators})"
+            )
+            ax.grid(axis="x", alpha=0.3)
+
+            evaluation["plot_feature_importance"] = plot_to_base64(fig)
         except Exception as e:
             print(f"Błąd podczas rysowania ważności cech: {e}")
-            evaluation['plot_feature_importance'] = None
+            evaluation["plot_feature_importance"] = None
 
         return evaluation
 
@@ -346,6 +384,7 @@ class RandomForestClassifierModel(BaseClassificationModel):
 # ===============================================
 # Regression Models (BaseRegressionModel)
 # ===============================================
+
 
 class LinearRegressionModel(BaseRegressionModel):
     def create_model(self):
@@ -355,8 +394,8 @@ class LinearRegressionModel(BaseRegressionModel):
 class DecisionTreeRegressorModel(BaseRegressionModel):
     def create_model(self):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
-        if self.model_parameters.get('max_depth') == 0:
-            self.model_parameters['max_depth'] = None
+        if self.model_parameters.get("max_depth") == 0:
+            self.model_parameters["max_depth"] = None
         self.model = DecisionTreeRegressor(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -372,36 +411,38 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
                 filled=True,
                 rounded=True,
                 ax=ax,
-                fontsize=10
+                fontsize=10,
             )
 
-            evaluation['plot_tree_base64'] = plot_to_base64(fig)
+            evaluation["plot_tree_base64"] = plot_to_base64(fig)
 
         except Exception as e:
             print(f"Błąd podczas rysowania drzewa regresji: {e}")
-            evaluation['plot_tree_base64'] = None
+            evaluation["plot_tree_base64"] = None
 
         # Feature Importance Plot
         try:
             feature_importance = self.model.feature_importances_
             feature_names = self.X_train.columns.tolist()
-            
+
             # Sort features by importance
             indices = np.argsort(feature_importance)[::-1]
             sorted_features = [feature_names[i] for i in indices]
             sorted_importance = feature_importance[indices]
-            
+
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
-            ax.set_xlabel('Ważność cechy')
-            ax.set_ylabel('Cecha')
-            ax.set_title('Ważność cech - Drzewo Decyzyjne (Regresja)')
-            ax.grid(axis='x', alpha=0.3)
-            
-            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+            sns.barplot(
+                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+            )
+            ax.set_xlabel("Ważność cechy")
+            ax.set_ylabel("Cecha")
+            ax.set_title("Ważność cech - Drzewo Decyzyjne (Regresja)")
+            ax.grid(axis="x", alpha=0.3)
+
+            evaluation["plot_feature_importance"] = plot_to_base64(fig)
         except Exception as e:
             print(f"Błąd podczas rysowania ważności cech: {e}")
-            evaluation['plot_feature_importance'] = None
+            evaluation["plot_feature_importance"] = None
 
         return evaluation
 
@@ -409,8 +450,8 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
 class RandomForestRegressorModel(BaseRegressionModel):
     def create_model(self):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
-        if self.model_parameters.get('max_depth') == 0:
-            self.model_parameters['max_depth'] = None
+        if self.model_parameters.get("max_depth") == 0:
+            self.model_parameters["max_depth"] = None
         self.model = RandomForestRegressor(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -420,29 +461,33 @@ class RandomForestRegressorModel(BaseRegressionModel):
         try:
             feature_importance = self.model.feature_importances_
             feature_names = self.X_train.columns.tolist()
-            
+
             # Sortuj według ważności
             indices = np.argsort(feature_importance)[::-1]
             sorted_features = [feature_names[i] for i in indices]
             sorted_importance = feature_importance[indices]
-            
+
             # Limit the number of features to 20
             max_features = 20
             if len(sorted_features) > max_features:
                 sorted_features = sorted_features[:max_features]
                 sorted_importance = sorted_importance[:max_features]
-            
+
             fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
-            sns.barplot(x=sorted_importance, y=sorted_features, ax=ax, palette='viridis')
-            ax.set_xlabel('Ważność cechy')
-            ax.set_ylabel('Cecha')
-            ax.set_title(f'Ważność cech - Lasy Losowe (Regresja, n_estimators={self.model.n_estimators})')
-            ax.grid(axis='x', alpha=0.3)
-            
-            evaluation['plot_feature_importance'] = plot_to_base64(fig)
+            sns.barplot(
+                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+            )
+            ax.set_xlabel("Ważność cechy")
+            ax.set_ylabel("Cecha")
+            ax.set_title(
+                f"Ważność cech - Lasy Losowe (Regresja, n_estimators={self.model.n_estimators})"
+            )
+            ax.grid(axis="x", alpha=0.3)
+
+            evaluation["plot_feature_importance"] = plot_to_base64(fig)
         except Exception as e:
             print(f"Błąd podczas rysowania ważności cech: {e}")
-            evaluation['plot_feature_importance'] = None
+            evaluation["plot_feature_importance"] = None
 
         return evaluation
 
@@ -455,6 +500,7 @@ class SVRModel(BaseRegressionModel):
 # ===============================================
 # Clustering Models (BaseUnsupervisedModel)
 # ===============================================
+
 
 class KMeansModel(BaseUnsupervisedModel):
     def create_model(self):
@@ -490,16 +536,16 @@ class KMeansModel(BaseUnsupervisedModel):
                 fig, ax = plt.subplots(figsize=(10, 8))
 
                 plot_df = pd.DataFrame(X_plot, columns=[x_label, y_label])
-                plot_df['Klaster'] = pd.Categorical(labels)
+                plot_df["Klaster"] = pd.Categorical(labels)
 
                 sns.scatterplot(
                     data=plot_df,
                     x=x_label,
                     y=y_label,
-                    hue='Klaster',
-                    palette='deep',
+                    hue="Klaster",
+                    palette="deep",
                     ax=ax,
-                    legend='full'
+                    legend="full",
                 )
 
                 centroids_original_space = self.model.cluster_centers_
@@ -512,11 +558,11 @@ class KMeansModel(BaseUnsupervisedModel):
                 ax.scatter(
                     centroids_plot_space[:, 0],
                     centroids_plot_space[:, 1],
-                    marker='X',
+                    marker="X",
                     s=250,
-                    c='red',
-                    edgecolor='black',
-                    label='Centroidy'
+                    c="red",
+                    edgecolor="black",
+                    label="Centroidy",
                 )
 
                 ax.set_title(plot_title)
@@ -524,11 +570,11 @@ class KMeansModel(BaseUnsupervisedModel):
                 ax.set_ylabel(y_label)
                 ax.legend()
 
-                evaluation['plot_kmeans_clusters'] = plot_to_base64(fig)
+                evaluation["plot_kmeans_clusters"] = plot_to_base64(fig)
 
         except Exception as e:
             print(f"Błąd podczas rysowania wizualizacji K-Means: {e}")
-            evaluation['plot_kmeans_clusters'] = None
+            evaluation["plot_kmeans_clusters"] = None
 
         # Elbow Method Plot
         try:
@@ -536,33 +582,46 @@ class KMeansModel(BaseUnsupervisedModel):
             max_k = min(10, len(self.X))
             k_range = range(1, max_k + 1)
             inertias = []
-            
+
             for k in k_range:
-                kmeans = KMeans(n_clusters=k, random_state=self.model_parameters.get('random_state', 42), n_init=10)
+                kmeans = KMeans(
+                    n_clusters=k,
+                    random_state=self.model_parameters.get("random_state", 42),
+                    n_init=10,
+                )
                 kmeans.fit(self.X)
                 inertias.append(kmeans.inertia_)
-            
+
             fig, ax = plt.subplots(figsize=(10, 6))
-            ax.plot(k_range, inertias, marker='o', linestyle='--', linewidth=2, markersize=8)
-            ax.set_xlabel('Liczba klastrów (k)')
-            ax.set_ylabel('WCSS (Within-Cluster Sum of Squares)')
-            ax.set_title('Elbow Method - Wybór optymalnej liczby klastrów')
+            ax.plot(
+                k_range, inertias, marker="o", linestyle="--", linewidth=2, markersize=8
+            )
+            ax.set_xlabel("Liczba klastrów (k)")
+            ax.set_ylabel("WCSS (Within-Cluster Sum of Squares)")
+            ax.set_title("Elbow Method - Wybór optymalnej liczby klastrów")
             ax.grid(True, alpha=0.3)
-            
+
             # Highlight current k value
             current_k = self.model.n_clusters
             if current_k in k_range:
                 current_inertia = inertias[current_k - 1]
-                ax.scatter([current_k], [current_inertia], color='red', s=200, zorder=5, 
-                          label=f'Obecna wartość k={current_k}')
+                ax.scatter(
+                    [current_k],
+                    [current_inertia],
+                    color="red",
+                    s=200,
+                    zorder=5,
+                    label=f"Obecna wartość k={current_k}",
+                )
                 ax.legend()
-            
-            evaluation['plot_kmeans_elbow'] = plot_to_base64(fig)
+
+            evaluation["plot_kmeans_elbow"] = plot_to_base64(fig)
         except Exception as e:
             print(f"Błąd podczas rysowania metody łokcia: {e}")
-            evaluation['plot_kmeans_elbow'] = None
+            evaluation["plot_kmeans_elbow"] = None
 
         return evaluation
+
 
 class DBSCANModel(BaseUnsupervisedModel):
     def create_model(self):
@@ -581,7 +640,6 @@ class DBSCANModel(BaseUnsupervisedModel):
             n_features = self.X.shape[1]
             X_plot = None
 
-
             if n_features == 2:
                 X_plot = self.X.values
                 x_label = self.X.columns[0] + " (Przeskalowane)"
@@ -599,11 +657,10 @@ class DBSCANModel(BaseUnsupervisedModel):
                 fig, ax = plt.subplots(figsize=(10, 8))
 
                 plot_df = pd.DataFrame(X_plot, columns=[x_label, y_label])
-                plot_df['Klaster'] = pd.Categorical(labels)
+                plot_df["Klaster"] = pd.Categorical(labels)
 
-
-                noise_df = plot_df[plot_df['Klaster'] == -1]
-                clustered_df = plot_df[plot_df['Klaster'] != -1]
+                noise_df = plot_df[plot_df["Klaster"] == -1]
+                clustered_df = plot_df[plot_df["Klaster"] != -1]
 
                 # 1. Narysuj punkty w klastrach
                 if not clustered_df.empty:
@@ -611,10 +668,10 @@ class DBSCANModel(BaseUnsupervisedModel):
                         data=clustered_df,
                         x=x_label,
                         y=y_label,
-                        hue='Klaster',
-                        palette='deep',
+                        hue="Klaster",
+                        palette="deep",
                         ax=ax,
-                        legend='full'
+                        legend="full",
                     )
 
                 # 2. Narysuj punkty szumu
@@ -622,10 +679,10 @@ class DBSCANModel(BaseUnsupervisedModel):
                     ax.scatter(
                         noise_df[x_label],
                         noise_df[y_label],
-                        marker='x',
+                        marker="x",
                         s=20,
-                        c='black',
-                        label='Szum (Klaster -1)'
+                        c="black",
+                        label="Szum (Klaster -1)",
                     )
 
                 ax.set_title(plot_title)
@@ -633,26 +690,28 @@ class DBSCANModel(BaseUnsupervisedModel):
                 ax.set_ylabel(y_label)
                 ax.legend()
 
-                evaluation['plot_dbscan_clusters'] = plot_to_base64(fig)
+                evaluation["plot_dbscan_clusters"] = plot_to_base64(fig)
 
         except Exception as e:
             print(f"Błąd podczas rysowania wizualizacji DBSCAN: {e}")
-            evaluation['plot_dbscan_clusters'] = None
+            evaluation["plot_dbscan_clusters"] = None
 
         return evaluation
+
 
 # ===============================================
 # Dimensions Reduction (BaseDimensionalityReduction)
 # ===============================================
 
+
 class PCAModel(BaseDimensionalityReduction):
     def create_model(self):
-        n_comp_value = self.model_parameters.get('n_components')
+        n_comp_value = self.model_parameters.get("n_components")
 
         # Handle the logic for n_components based on the UI's design choices.
         # in case 0 or None are passed to mean 'no reduction'.
-        if  n_comp_value <= 0:
-            self.model_parameters['n_components'] = None
+        if n_comp_value <= 0:
+            self.model_parameters["n_components"] = None
 
         self.model = PCA(**self.model_parameters)
 
@@ -667,7 +726,7 @@ class PCAModel(BaseDimensionalityReduction):
         try:
             # === 1.  Scree Plot ===
 
-            n_comp_param = self.model_parameters.get('n_components')
+            n_comp_param = self.model_parameters.get("n_components")
 
             # check if we need to fit a full PCA model for scree plot when n_components is set
             if n_comp_param is None:
@@ -680,12 +739,17 @@ class PCAModel(BaseDimensionalityReduction):
             num_components = len(full_pca_model.explained_variance_ratio_)
             components = np.arange(1, num_components + 1)
 
-            ax_scree.plot(components, full_pca_model.explained_variance_ratio_, marker='o', linestyle='--')
-            ax_scree.set_xlabel('Główna Składowa')
-            ax_scree.set_ylabel('Wyjaśniona Wariancja')
-            ax_scree.set_title('Wykres Spadków Wariancji (Scree Plot)')
+            ax_scree.plot(
+                components,
+                full_pca_model.explained_variance_ratio_,
+                marker="o",
+                linestyle="--",
+            )
+            ax_scree.set_xlabel("Główna Składowa")
+            ax_scree.set_ylabel("Wyjaśniona Wariancja")
+            ax_scree.set_title("Wykres Spadków Wariancji (Scree Plot)")
             ax_scree.grid(True)
-            evaluation['plot_pca_scree'] = plot_to_base64(fig_scree)
+            evaluation["plot_pca_scree"] = plot_to_base64(fig_scree)
 
             # === 2. Biplotu ===
 
@@ -702,43 +766,46 @@ class PCAModel(BaseDimensionalityReduction):
                     y=X_reduced_2d[:, 1],
                     ax=ax_biplot,
                     alpha=0.6,
-                    label='Zredukowane Dane Treningowe'
+                    label="Zredukowane Dane Treningowe",
                 )
 
-                feature_vectors = self.model.components_.T * np.sqrt(self.model.explained_variance_)
+                feature_vectors = self.model.components_.T * np.sqrt(
+                    self.model.explained_variance_
+                )
 
                 for i, feature in enumerate(self.X_train.columns):
                     ax_biplot.arrow(
-                        0, 0,
+                        0,
+                        0,
                         feature_vectors[i, 0],
                         feature_vectors[i, 1],
                         head_width=0.05,
                         head_length=0.05,
-                        fc='red',
-                        ec='red'
+                        fc="red",
+                        ec="red",
                     )
                     ax_biplot.text(
                         feature_vectors[i, 0] * 1.1,
                         feature_vectors[i, 1] * 1.1,
                         feature,
-                        color='green',
-                        ha='center',
-                        va='center'
+                        color="green",
+                        ha="center",
+                        va="center",
                     )
 
                 ax_biplot.set_xlabel("Główna Składowa 1")
                 ax_biplot.set_ylabel("Główna Składowa 2")
                 ax_biplot.set_title("Biplot PCA (Punkty i Wektory Cech)")
                 ax_biplot.grid(True)
-                ax_biplot.axhline(0, color='gray', linewidth=0.5)
-                ax_biplot.axvline(0, color='gray', linewidth=0.5)
+                ax_biplot.axhline(0, color="gray", linewidth=0.5)
+                ax_biplot.axvline(0, color="gray", linewidth=0.5)
                 ax_biplot.legend()
 
-                evaluation['plot_pca_biplot'] = plot_to_base64(fig_biplot)
+                evaluation["plot_pca_biplot"] = plot_to_base64(fig_biplot)
 
         except Exception as e:
             print(f"Błąd podczas rysowania wizualizacji PCA: {e}")
-            evaluation['plot_pca_scree'] = None
-            evaluation['plot_pca_biplot'] = None
+            evaluation["plot_pca_scree"] = None
+            evaluation["plot_pca_biplot"] = None
 
         return evaluation

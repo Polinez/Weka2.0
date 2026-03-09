@@ -1,4 +1,5 @@
 """Model name to implementation class mapping."""
+
 from ml.services.ml_models.implementations import (
     LogisticRegressionModel,
     LinearRegressionModel,

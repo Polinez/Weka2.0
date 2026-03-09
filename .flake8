@@ -1,0 +1,21 @@
+[flake8]
+exclude =
+        .git,
+        pycache,
+        venv,
+        .venv,
+        /migrations/,
+        manage.py,
+        /Weka2_0
+
+max-line-length = 1088
+
+max-complexity = 15
+
+extend-ignore =
+                E203,
+                W503,
+                H404,
+                H405,
+                H301,
+                H306

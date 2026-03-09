@@ -9,49 +9,103 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('data', '0001_initial'),
+        ("data", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PreprocessingType',
+            name="PreprocessingType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('description', models.TextField(blank=True)),
-                ('code_reference', models.CharField(max_length=200)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("description", models.TextField(blank=True)),
+                ("code_reference", models.CharField(max_length=200)),
             ],
         ),
         migrations.CreateModel(
-            name='PreprocessingPipeline',
+            name="PreprocessingPipeline",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('processed_file_path', models.CharField(blank=True, max_length=500, null=True)),
-                ('processed_train_path', models.CharField(blank=True, max_length=500, null=True)),
-                ('processed_test_path', models.CharField(blank=True, max_length=500, null=True)),
-                ('output_columns_metadata', models.JSONField(blank=True, default=dict)),
-                ('split_config', models.JSONField(blank=True, default=dict)),
-                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pipelines', to='data.dataset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "processed_file_path",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
+                (
+                    "processed_train_path",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
+                (
+                    "processed_test_path",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
+                ("output_columns_metadata", models.JSONField(blank=True, default=dict)),
+                ("split_config", models.JSONField(blank=True, default=dict)),
+                (
+                    "dataset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="pipelines",
+                        to="data.dataset",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='PreprocessingStep',
+            name="PreprocessingStep",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('order', models.IntegerField()),
-                ('parameters', models.JSONField(default=dict)),
-                ('applied_at', models.DateTimeField(auto_now_add=True)),
-                ('pipeline', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='steps', to='preprocessing.preprocessingpipeline')),
-                ('type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='steps', to='preprocessing.preprocessingtype')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("order", models.IntegerField()),
+                ("parameters", models.JSONField(default=dict)),
+                ("applied_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "pipeline",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="steps",
+                        to="preprocessing.preprocessingpipeline",
+                    ),
+                ),
+                (
+                    "type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="steps",
+                        to="preprocessing.preprocessingtype",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['order'],
-                'unique_together': {('pipeline', 'order')},
+                "ordering": ["order"],
+                "unique_together": {("pipeline", "order")},
             },
         ),
     ]

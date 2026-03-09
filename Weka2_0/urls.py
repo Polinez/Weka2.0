@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from register import views as register_views
@@ -21,12 +22,12 @@ from django.shortcuts import redirect
 from data.views import contact, about
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', lambda request: redirect('data:load_data')),
-    path('signup/', register_views.signup, name='signup'),
-    path('', include('django.contrib.auth.urls')),
+    path("admin/", admin.site.urls),
+    path("", lambda request: redirect("data:load_data")),
+    path("signup/", register_views.signup, name="signup"),
+    path("", include("django.contrib.auth.urls")),
     path("upload/", include("data.urls")),
-    path('contact/', contact, name='contact'),
-    path('about/', about, name='about'),
-    path('mlstudio/', include('ml.urls')),
+    path("contact/", contact, name="contact"),
+    path("about/", about, name="about"),
+    path("mlstudio/", include("ml.urls")),
 ]

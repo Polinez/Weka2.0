@@ -10,9 +10,11 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 import os
 from django.core.wsgi import get_wsgi_application
 
-settings_module = os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Weka2_0.settings.production')
+settings_module = os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE", "Weka2_0.settings.production"
+)
 
 # Setting parameters locally  based on setting and in deployment from azure
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
 
 application = get_wsgi_application()

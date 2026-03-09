@@ -99,13 +99,34 @@ git clone https://github.com/Polinez/Weka2.0.git
 cd Weka2.0
 ```
 
-### Step 2: Environment & Database Setup
-You can easily set up the whole project using the provided `ctl` script.
+### Step 2: Configure Environment Variables
+Before running the application, you need to set up your local environment variables. Create a file named `.env` in the root directory of the project (at the same level as `manage.py`) and paste the following structure:
 
-To see all comands:
-```bash
-bash ctl
+```env
+# python 3.10.11
+
+DEBUG=True
+SECRET_KEY='your-random-secret-key-here'
+ALLOWED_HOSTS=127.0.0.1,localhost
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1,http://localhost
+
+# Email configuration
+EMAIL_USER="your.email@example.com"
+EMAIL_PASSWORD="your-email-password"
+
+# local name of the sqlite3 database file
+DB_NAME=db.sqlite3
 ```
+
+**Where to get these values:**
+* `DEBUG`: Leave as `True` for local development. Set to `False` in production.
+* `SECRET_KEY`: A unique, unpredictable string used by Django for security. For local development, it can be any random string (e.g. `'djang24su'`). For production, generate a strong one (e.g., using `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`).
+* `ALLOWED_HOSTS` & `CSRF_TRUSTED_ORIGINS`: Leave as provided for local testing.
+* `EMAIL_USER` & `EMAIL_PASSWORD`: Used for sending emails (like password resets). Provide your SMTP server email. If you use Gmail, you must generate a special **"App Password"** in your Google Account security settings (do not use your standard login password).
+* `DB_NAME`: The default name for the SQLite database. Leave as `db.sqlite3`.
+
+### Step 3: Environment & Database Setup
+You can easily set up the whole project using the provided `ctl` script.
 
 Initialize virtual environment and install requirements:
 ```bash
@@ -119,7 +140,7 @@ bash ctl db_init
 
 *(Alternatively, you can manually create a venv, install requirements, run `makemigrations`, `migrate`, and `seed_data` using `manage.py`)*
 
-### Step 3: Run the server
+### Step 4: Run the server
 Start the local development server:
 
 ```bash
