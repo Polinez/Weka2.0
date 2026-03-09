@@ -16,38 +16,83 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Dataset',
+            name="Dataset",
             fields=[
-                ('dataset_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(db_index=True, max_length=255)),
-                ('file_path', models.CharField(max_length=500)),
-                ('row_count', models.IntegerField(default=0)),
-                ('column_count', models.IntegerField(default=0)),
-                ('file_size_bytes', models.BigIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('is_archived', models.BooleanField(default=False)),
-                ('problem_type', models.CharField(blank=True, choices=[('Classification', 'Klasyfikacja'), ('Regression', 'Regresja'), ('Clustering', 'Klasteryzacja'), ('Dimensionality_Reduction', 'Redukcja Wymiarowości')], max_length=30, null=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "dataset_id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=255)),
+                ("file_path", models.CharField(max_length=500)),
+                ("row_count", models.IntegerField(default=0)),
+                ("column_count", models.IntegerField(default=0)),
+                ("file_size_bytes", models.BigIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("is_archived", models.BooleanField(default=False)),
+                (
+                    "problem_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Classification", "Klasyfikacja"),
+                            ("Regression", "Regresja"),
+                            ("Clustering", "Klasteryzacja"),
+                            ("Dimensionality_Reduction", "Redukcja Wymiarowości"),
+                        ],
+                        max_length=30,
+                        null=True,
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='DatasetColumn',
+            name="DatasetColumn",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('inferred_type', models.CharField(default='unknown', max_length=50)),
-                ('is_target', models.BooleanField(default=False)),
-                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='columns', to='data.dataset')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("inferred_type", models.CharField(default="unknown", max_length=50)),
+                ("is_target", models.BooleanField(default=False)),
+                (
+                    "dataset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="columns",
+                        to="data.dataset",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['id'],
+                "ordering": ["id"],
             },
         ),
         migrations.AddConstraint(
-            model_name='dataset',
-            constraint=models.UniqueConstraint(fields=('user', 'name'), name='data_unique_user_dataset'),
+            model_name="dataset",
+            constraint=models.UniqueConstraint(
+                fields=("user", "name"), name="data_unique_user_dataset"
+            ),
         ),
     ]

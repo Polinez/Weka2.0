@@ -65,17 +65,16 @@ case "$1" in
         echo -e "${GREEN}Running flake8: https://www.flake8rules.com/${NC}"
         init_env
         shift
-        # Default to current directory if no path is provided
-        scan_path=${1:-"."}
-        flake8 --statistics $scan_path
+        scan_path=${1:-"data ml preprocessing register core Weka2_0"}
+        flake8 --exclude=.venv,venv,*/migrations/* --statistics $scan_path
         ;;
 
     black)
         echo -e "${GREEN}Running black formatter...${NC}"
         init_env
         shift
-        # Format main python directories in the Weka 2.0 project
-        black data ml preprocessing register core Weka2_0 "$@"
+        scan_path=${1:-"data ml preprocessing register core Weka2_0"}
+        black $scan_path "$@"
         ;;
 
     db_init)

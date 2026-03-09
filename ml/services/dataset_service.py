@@ -1,8 +1,10 @@
 """Service for dataset exploration and statistics."""
+
 import pandas as pd
 from data.services import load_dataset_dataframe
 from preprocessing.services import get_train_test_dataframes
 from ml.services.plot_service import generate_exploration_histogram
+
 
 def get_active_dataframe(dataset, pipeline) -> pd.DataFrame:
     """
@@ -14,14 +16,16 @@ def get_active_dataframe(dataset, pipeline) -> pd.DataFrame:
         try:
             train_test = get_train_test_dataframes(pipeline)
             if train_test:
-                return train_test[0] # Returning training set
+                return train_test[0]  # Returning training set
         except Exception:
-            pass # Ignoring cache errors, fallback to raw
-    
+            pass  # Ignoring cache errors, fallback to raw
+
     return load_dataset_dataframe(dataset)
 
 
-def get_exploration_context(dataset, pipeline, selected_column_session: str | None) -> dict:
+def get_exploration_context(
+    dataset, pipeline, selected_column_session: str | None
+) -> dict:
     """
     Prepares all data needed for the Explore view:
     - Dataframe preview
@@ -62,5 +66,5 @@ def get_exploration_context(dataset, pipeline, selected_column_session: str | No
         "statistics": statistics,
         "stat_columns": stat_columns,
         "graph": graph,
-        "selected_column": selected_column, # Returning, because it could have changed (auto-select)
+        "selected_column": selected_column,  # Returning, because it could have changed (auto-select)
     }

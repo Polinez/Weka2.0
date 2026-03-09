@@ -7,6 +7,7 @@ from core.enums import ProblemType
 
 class Dataset(models.Model):
     """Dataset - raw file metadata. Actual data stored on disk."""
+
     dataset_id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -30,9 +31,11 @@ class Dataset(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'name'], name='data_unique_user_dataset')
+            models.UniqueConstraint(
+                fields=["user", "name"], name="data_unique_user_dataset"
+            )
         ]
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.name} ({self.row_count} rows)"
@@ -45,13 +48,16 @@ class Dataset(models.Model):
 
 class DatasetColumn(models.Model):
     """Column metadata for a dataset."""
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='columns')
+
+    dataset = models.ForeignKey(
+        Dataset, on_delete=models.CASCADE, related_name="columns"
+    )
     name = models.CharField(max_length=255)
-    inferred_type = models.CharField(max_length=50, default='unknown')
+    inferred_type = models.CharField(max_length=50, default="unknown")
     is_target = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]
 
     def __str__(self):
         return f"{self.dataset.name}.{self.name}"

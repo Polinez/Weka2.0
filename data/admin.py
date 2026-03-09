@@ -9,7 +9,14 @@ class DatasetColumnInline(admin.TabularInline):
 
 @admin.register(Dataset)
 class DatasetAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'problem_type', 'row_count', 'column_count', 'created_at')
-    list_filter = ('problem_type', 'user')
-    search_fields = ('name',)
+    list_display = (
+        "name",
+        "user",
+        "problem_type",
+        "row_count",
+        "column_count",
+        "created_at",
+    )
+    list_filter = ("problem_type", "user")
+    search_fields = ("name",)
     inlines = [DatasetColumnInline]

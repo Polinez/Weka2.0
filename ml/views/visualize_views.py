@@ -1,4 +1,5 @@
 """Visualization views."""
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -17,14 +18,16 @@ def visualize(request):
 
     # Service returns ready objects or error to display
     latest_run, plots, error_msg = get_latest_run_visualization_data(
-        user=request.user,
-        dataset=dataset,
-        pipeline=pipeline
+        user=request.user, dataset=dataset, pipeline=pipeline
     )
 
-    return render(request, "visualize.html", {
-        "dataset": dataset,
-        "latest_run": latest_run,
-        "plots": plots,
-        "error": error_msg,
-    })
+    return render(
+        request,
+        "visualize.html",
+        {
+            "dataset": dataset,
+            "latest_run": latest_run,
+            "plots": plots,
+            "error": error_msg,
+        },
+    )

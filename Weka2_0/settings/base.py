@@ -14,38 +14,37 @@ from pathlib import Path
 from decouple import config
 from django.contrib.messages import constants as messages
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-dummy-key-base')
+SECRET_KEY = config("SECRET_KEY", default="django-insecure-dummy-key-base")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-#Hosts in production and local files
+# Hosts in production and local files
 ALLOWED_HOSTS = []
 
 
 MESSAGE_TAGS = {
-    messages.DEBUG: 'secondary',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'danger',
+    messages.DEBUG: "secondary",
+    messages.INFO: "info",
+    messages.SUCCESS: "success",
+    messages.WARNING: "warning",
+    messages.ERROR: "danger",
 }
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    #my apps
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # my apps
     "core",
     "data",
     "preprocessing",
@@ -56,34 +55,36 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'Weka2_0.urls'
+ROOT_URLCONF = "Weka2_0.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"], # Global templates directory for base template
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            BASE_DIR / "templates"
+        ],  # Global templates directory for base template
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'Weka2_0.wsgi.application'
+WSGI_APPLICATION = "Weka2_0.wsgi.application"
 
 
 # Database
@@ -98,16 +99,16 @@ DATABASES = {}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -116,43 +117,42 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 # --- LANGUAGE AND TIME ---
-LANGUAGE_CODE = 'pl'
-TIME_ZONE = 'Europe/Warsaw'
+LANGUAGE_CODE = "pl"
+TIME_ZONE = "Europe/Warsaw"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # --- STATIC FILES ---
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'static_root'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "static_root"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # for production
 if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 # --- OTHERS ---
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 
 # Login URL
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'data:load_data'  # Redirect to home after login
-LOGOUT_REDIRECT_URL = 'login'  # Redirect to login after logout
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "data:load_data"  # Redirect to home after login
+LOGOUT_REDIRECT_URL = "login"  # Redirect to login after logout
 
 
 # --- EMAIL ---
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from .models import MLRun
 
+
 @receiver(post_delete, sender=MLRun)
 def delete_ml_artifacts(sender, instance, **kwargs):
     """Delete model binary file (.joblib) and optional run folder when MLRun is deleted."""

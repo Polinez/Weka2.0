@@ -1,4 +1,5 @@
 """Dataset selection and studio views."""
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
@@ -14,21 +15,25 @@ from ml.services.dataset_service import get_exploration_context
 def select_dataset(request, dataset_id):
     """Store selected dataset and pipeline in session."""
     dataset = get_object_or_404(Dataset, dataset_id=dataset_id, user=request.user)
-    
+
     # Creating default pipeline when selecting dataset
-    pipeline = get_or_create_active_pipeline(dataset, {'test_size': 0.2, 'random_state': 42})
-    
-    # Setting session 
-    request.session['dataset_id'] = str(dataset.dataset_id)
-    request.session['pipeline_id'] = pipeline.id
-    request.session['split_config'] = pipeline.split_config or {}
-    
+    pipeline = get_or_create_active_pipeline(
+        dataset, {"test_size": 0.2, "random_state": 42}
+    )
+
+    # Setting session
+    request.session["dataset_id"] = str(dataset.dataset_id)
+    request.session["pipeline_id"] = pipeline.id
+    request.session["split_config"] = pipeline.split_config or {}
+
     # Resetting UI choices dependent on data
-    if 'selected_column' in request.session:
-        del request.session['selected_column']
-    if 'selected_feature' in request.session: # Resetting selection in Preprocessing also worth doing
-        del request.session['selected_feature']
-        
+    if "selected_column" in request.session:
+        del request.session["selected_column"]
+    if (
+        "selected_feature" in request.session
+    ):  # Resetting selection in Preprocessing also worth doing
+        del request.session["selected_feature"]
+
     return redirect("ml:studio")
 
 
@@ -51,15 +56,19 @@ def studio(request):
     context_data = get_exploration_context(
         dataset=dataset,
         pipeline=pipeline,
-        selected_column_session=request.session.get("selected_column")
+        selected_column_session=request.session.get("selected_column"),
     )
 
     # Updating session if service selected default column (auto-select)
-    if context_data['selected_column'] != request.session.get("selected_column"):
-        request.session["selected_column"] = context_data['selected_column']
+    if context_data["selected_column"] != request.session.get("selected_column"):
+        request.session["selected_column"] = context_data["selected_column"]
 
     # 4. Rendering template
-    return render(request, "explore.html", {
-        "dataset": dataset,
-        **context_data # Unpacking dictionary (data, statistics, graph, etc.)
-    })
+    return render(
+        request,
+        "explore.html",
+        {
+            "dataset": dataset,
+            **context_data,  # Unpacking dictionary (data, statistics, graph, etc.)
+        },
+    )

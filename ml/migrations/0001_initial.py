@@ -11,52 +11,137 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('data', '0001_initial'),
-        ('preprocessing', '0001_initial'),
+        ("data", "0001_initial"),
+        ("preprocessing", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MLModel',
+            name="MLModel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('library', models.CharField(default='scikit-learn', max_length=50)),
-                ('type', models.CharField(choices=[('Classification', 'Klasyfikacja'), ('Regression', 'Regresja'), ('Clustering', 'Klasteryzacja'), ('Dimensionality_Reduction', 'Redukcja Wymiarowości')], max_length=30)),
-                ('description', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("library", models.CharField(default="scikit-learn", max_length=50)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("Classification", "Klasyfikacja"),
+                            ("Regression", "Regresja"),
+                            ("Clustering", "Klasteryzacja"),
+                            ("Dimensionality_Reduction", "Redukcja Wymiarowości"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
             ],
         ),
         migrations.CreateModel(
-            name='MLRun',
+            name="MLRun",
             fields=[
-                ('run_id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
-                ('status', models.CharField(default='Success', max_length=20)),
-                ('split_config', models.JSONField(default=dict)),
-                ('used_parameters', models.JSONField(default=dict)),
-                ('metrics', models.JSONField(default=dict)),
-                ('plots_paths', models.JSONField(blank=True, default=dict)),
-                ('model_binary_path', models.CharField(blank=True, max_length=500, null=True)),
-                ('execution_time_ms', models.IntegerField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='runs', to='data.dataset')),
-                ('model', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ml.mlmodel')),
-                ('pipeline', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='runs', to='preprocessing.preprocessingpipeline')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "run_id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("status", models.CharField(default="Success", max_length=20)),
+                ("split_config", models.JSONField(default=dict)),
+                ("used_parameters", models.JSONField(default=dict)),
+                ("metrics", models.JSONField(default=dict)),
+                ("plots_paths", models.JSONField(blank=True, default=dict)),
+                (
+                    "model_binary_path",
+                    models.CharField(blank=True, max_length=500, null=True),
+                ),
+                ("execution_time_ms", models.IntegerField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "dataset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="runs",
+                        to="data.dataset",
+                    ),
+                ),
+                (
+                    "model",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="ml.mlmodel"
+                    ),
+                ),
+                (
+                    "pipeline",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="runs",
+                        to="preprocessing.preprocessingpipeline",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='ModelParameterDef',
+            name="ModelParameterDef",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('default_value', models.CharField(default='', max_length=200)),
-                ('data_type', models.CharField(choices=[('int', 'int'), ('float', 'float'), ('str', 'str'), ('bool', 'bool')], default='str', max_length=10)),
-                ('description', models.TextField(blank=True)),
-                ('model', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='parameter_defs', to='ml.mlmodel')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("default_value", models.CharField(default="", max_length=200)),
+                (
+                    "data_type",
+                    models.CharField(
+                        choices=[
+                            ("int", "int"),
+                            ("float", "float"),
+                            ("str", "str"),
+                            ("bool", "bool"),
+                        ],
+                        default="str",
+                        max_length=10,
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
+                (
+                    "model",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="parameter_defs",
+                        to="ml.mlmodel",
+                    ),
+                ),
             ],
         ),
     ]
