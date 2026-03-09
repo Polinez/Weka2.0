@@ -102,6 +102,11 @@ cd Weka2.0
 ### Step 2: Environment & Database Setup
 You can easily set up the whole project using the provided `ctl` script.
 
+To see all comands:
+```bash
+bash ctl
+```
+
 Initialize virtual environment and install requirements:
 ```bash
 bash ctl env_init
