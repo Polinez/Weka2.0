@@ -91,53 +91,34 @@ Follow these steps to run the project locally.
 ### Prerequisites
 * Python **3.10** or higher
 * Git
+* Git Bash (recommended for Windows users to run `.sh` scripts)
 
 ### Step 1: Clone the repository
 ```bash
 git clone https://github.com/Polinez/Weka2.0.git
 cd Weka2.0
 ```
-### Step 2: Install dependencies
-It is recommended to use a virtual environment to manage dependencies:
 
+### Step 2: Environment & Database Setup
+You can easily set up the whole project using the provided `ctl` script.
+
+Initialize virtual environment and install requirements:
 ```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
+bash ctl env_init
 ```
 
-
-
-Install the required packages:
+Initialize the database, run migrations, and seed initial data (Crucial step to populate ML models and preprocessing types lists):
 ```bash
-pip install -r requirements.txt
+bash ctl db_init
 ```
 
-### Step 3: Database Setup
-Initialize the SQLite database and apply migrations:
+*(Alternatively, you can manually create a venv, install requirements, run `makemigrations`, `migrate`, and `seed_data` using `manage.py`)*
 
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-### Step 4: Seed Initial Data (Crucial!)
-The application requires initial data to populate the lists of available ML models (e.g., RandomForest, SVM) and preprocessing types. Run the following command:
-
-```bash
-python manage.py seed_data
-```
-*Note: This command executes the script found in `ml/management/commands/seed_data.py`. Without this step, the model selection dropdowns will be empty.*
-
-### Step 5: Run the server
+### Step 3: Run the server
 Start the local development server:
 
 ```bash
-python manage.py runserver
+bash ctl run
 ```
 
 Open your browser and navigate to: `http://127.0.0.1:8000/`
