@@ -124,6 +124,7 @@ def prepare_model_params_for_display(
                     "label": pdef.name,
                     "data_type": pdef.data_type,
                     "description": pdef.description,
+                    "options": pdef.options,
                 }
             )
 

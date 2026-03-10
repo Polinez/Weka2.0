@@ -51,11 +51,11 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get("max_depth") == 0:
             self.model_parameters["max_depth"] = None
-        # Convert "None" to None for class_weight
-        if "class_weight" in self.model_parameters:
-            value = self.model_parameters["class_weight"]
-            if value == "None" or value == "":
-                self.model_parameters["class_weight"] = None
+
+        for key in ["class_weight", "max_features"]:
+            if self.model_parameters.get(key) == "None":
+                self.model_parameters[key] = None
+
         self.model = DecisionTreeClassifier(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -341,11 +341,11 @@ class RandomForestClassifierModel(BaseClassificationModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get("max_depth") == 0:
             self.model_parameters["max_depth"] = None
-        # Convert "None" to None for class_weight
-        if "class_weight" in self.model_parameters:
-            value = self.model_parameters["class_weight"]
-            if value == "None" or value == "":
-                self.model_parameters["class_weight"] = None
+
+        for key in ["class_weight", "max_features"]:
+            if self.model_parameters.get(key) == "None":
+                self.model_parameters[key] = None
+
         self.model = RandomForestClassifier(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -406,6 +406,10 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get("max_depth") == 0:
             self.model_parameters["max_depth"] = None
+
+        if self.model_parameters.get("max_features") == "None":
+            self.model_parameters["max_features"] = None
+
         self.model = DecisionTreeRegressor(**self.model_parameters)
 
     def evaluate_model(self, y_pred):
@@ -467,6 +471,10 @@ class RandomForestRegressorModel(BaseRegressionModel):
         # Convert max_depth=0 from UI (intended as unlimited) to None for scikit-learn
         if self.model_parameters.get("max_depth") == 0:
             self.model_parameters["max_depth"] = None
+
+        if self.model_parameters.get("max_features") == "None":
+            self.model_parameters["max_features"] = None
+
         self.model = RandomForestRegressor(**self.model_parameters)
 
     def evaluate_model(self, y_pred):

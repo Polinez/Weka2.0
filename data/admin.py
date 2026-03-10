@@ -6,6 +6,7 @@ class DatasetColumnInline(admin.TabularInline):
     model = DatasetColumn
     extra = 0
 
+
 @admin.register(Dataset)
 class DatasetAdmin(admin.ModelAdmin):
     list_display = (

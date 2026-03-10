@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% load l10n %} {% block title %}ML Studio - {{ dataset.name }}{% endblock %}
+{% load l10n %}
+
+{% block title %}ML Studio - {{ dataset.name }}{% endblock %}
 
 {% block content %}
     {% include "_submenu.html" %}
@@ -94,7 +96,13 @@
                                             {% if param.description %}<i class="bi bi-info-circle ms-1 text-muted"></i>{% endif %}
                                         </td>
                                         <td>
-                                            {% if param.data_type == 'bool' %}
+                                            {% if param.options %}
+                                                <select name="param_{{ param.name }}" class="form-select">
+                                                    {% for opt in param.options %}
+                                                        <option value="{{ opt }}" {% if param.value == opt or param.value == opt|stringformat:"s" %}selected{% endif %}>{{ opt }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% elif param.data_type == 'bool' %}
                                                 <select name="param_{{ param.name }}" class="form-select">
                                                     <option value="True" {% if param.value == True or param.value == "True" %}selected{% endif %}>True</option>
                                                     <option value="False" {% if param.value == False or param.value == "False" or not param.value %}selected{% endif %}>False</option>
@@ -126,5 +134,4 @@
             <button type="submit" name="save_all" class="btn btn-success btn-lg">Zapisz wszystkie ustawienia</button>
         </div>
     </form>
-
 {% endblock %}

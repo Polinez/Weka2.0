@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import PreprocessingType, PreprocessingPipeline, PreprocessingStep
 
+
 @admin.register(PreprocessingType)
 class PreprocessingTypeAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "description")
@@ -12,6 +13,7 @@ class PreprocessingStepInline(admin.TabularInline):
     extra = 0
     readonly_fields = ("applied_at",)
 
+
 @admin.register(PreprocessingPipeline)
 class PreprocessingPipelineAdmin(admin.ModelAdmin):
     list_display = (
@@ -21,7 +23,7 @@ class PreprocessingPipelineAdmin(admin.ModelAdmin):
         "created_at",
         "processed_file_path",
         "processed_train_path",
-        "processed_test_path"
+        "processed_test_path",
     )
     list_filter = ("is_active",)
     readonly_fields = ("created_at", "output_columns_metadata", "split_config")

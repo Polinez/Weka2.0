@@ -25,15 +25,20 @@ class MLRunAdmin(admin.ModelAdmin):
         "status",
         "execution_time_ms",
         "created_at",
-        "model_binary_path"
+        "model_binary_path",
     )
     list_filter = ("status", "model", "user")
-    search_fields = ("run_id", "user__username", "pipeline__dataset__name", "model__name")
+    search_fields = (
+        "run_id",
+        "user__username",
+        "pipeline__dataset__name",
+        "model__name",
+    )
 
     readonly_fields = (
         "run_id",
         "created_at",
         "metrics",
         "used_parameters",
-        "plots_paths"
+        "plots_paths",
     )
