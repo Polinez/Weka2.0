@@ -128,9 +128,9 @@ class BaseUnsupervisedModel(BaseMLModel):
     ):
         super().__init__(common_parameters, model_parameters, target_column=None)
 
-    def prepare_data(self, df_train):
-        self.X = df_train
-        self.X_train = df_train
+    def prepare_data(self, df_train, df_test):
+        self.X = pd.concat([df_train, df_test], ignore_index=True)
+        self.X_train = self.X
         self.y_train = None
         self.X_test = None
         self.y_test = None
@@ -162,7 +162,7 @@ class BaseUnsupervisedModel(BaseMLModel):
         }
 
     def run(self, df_train, df_test):
-        self.prepare_data(df_train)
+        self.prepare_data(df_train, df_test)
         self.create_model()
         self.train_model()
         result = self.process_data()
@@ -174,6 +174,11 @@ class BaseDimensionalityReduction(BaseMLModel):
         self, common_parameters: dict, model_parameters: dict, target_column: str = None
     ):
         super().__init__(common_parameters, model_parameters, target_column=None)
+
+    def prepare_data(self, df_train, df_test):
+        self.X = pd.concat([df_train, df_test], ignore_index=True)
+        self.X_train = self.X
+        self.X_test = self.X
 
     def train_model(self):
         self.model.fit(self.X_train)
