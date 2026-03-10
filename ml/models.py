@@ -35,6 +35,7 @@ class ModelParameterDef(models.Model):
         default=ParamDataType.STR,
     )
     description = models.TextField(blank=True)
+    options = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return f"{self.model.name}.{self.name}"
