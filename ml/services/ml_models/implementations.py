@@ -95,7 +95,12 @@ class DecisionTreeClassificationModel(BaseClassificationModel):
 
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.barplot(
-                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+                x=sorted_importance,
+                y=sorted_features,
+                hue=sorted_features,
+                ax=ax,
+                palette="viridis",
+                legend=False,
             )
             ax.set_xlabel("Ważność cechy")
             ax.set_ylabel("Cecha")
@@ -153,21 +158,21 @@ class KNNClassifierModel(BaseClassificationModel):
                     try:
                         from sklearn.model_selection import train_test_split
 
-                        X_plot_sample, _, y_numeric_sample, _ = train_test_split(
+                        # Nadpisujemy X_plot i y_numeric zamiast tworzyć zmienne _sample
+                        X_plot, _, y_numeric, _ = train_test_split(
                             X_plot,
                             y_numeric,
                             train_size=PLOT_SAMPLE_SIZE,
                             stratify=y_numeric,
                         )
+                        y_plot = y_numeric
                     except ValueError:
                         indices = np.random.choice(
                             len(y_numeric), PLOT_SAMPLE_SIZE, replace=False
                         )
-                        X_plot_sample = X_plot[indices]
-                        y_numeric_sample = y_numeric[indices]
-                else:
-                    X_plot_sample = X_plot
-                    y_numeric_sample = y_numeric
+                        X_plot = X_plot[indices]
+                        y_numeric = y_numeric[indices]
+                        y_plot = y_numeric
 
                 h = 0.15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
@@ -265,21 +270,21 @@ class SVCModel(BaseClassificationModel):
                     try:
                         from sklearn.model_selection import train_test_split
 
-                        X_plot_sample, _, y_numeric_sample, _ = train_test_split(
+                        # Overwrite X_plot and y_numeric instead of creating _sample variables
+                        X_plot, _, y_numeric, _ = train_test_split(
                             X_plot,
                             y_numeric,
                             train_size=PLOT_SAMPLE_SIZE,
                             stratify=y_numeric,
                         )
+                        y_plot = y_numeric
                     except ValueError:
                         indices = np.random.choice(
                             len(y_numeric), PLOT_SAMPLE_SIZE, replace=False
                         )
-                        X_plot_sample = X_plot[indices]
-                        y_numeric_sample = y_numeric[indices]
-                else:
-                    X_plot_sample = X_plot
-                    y_numeric_sample = y_numeric
+                        X_plot = X_plot[indices]
+                        y_numeric = y_numeric[indices]
+                        y_plot = y_numeric
 
                 h = 0.15
                 x_min, x_max = X_plot[:, 0].min() - 1, X_plot[:, 0].max() + 1
@@ -364,7 +369,12 @@ class RandomForestClassifierModel(BaseClassificationModel):
 
             fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
             sns.barplot(
-                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+                x=sorted_importance,
+                y=sorted_features,
+                hue=sorted_features,
+                ax=ax,
+                palette="viridis",
+                legend=False,
             )
             ax.set_xlabel("Ważność cechy")
             ax.set_ylabel("Cecha")
@@ -432,7 +442,12 @@ class DecisionTreeRegressorModel(BaseRegressionModel):
 
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.barplot(
-                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+                x=sorted_importance,
+                y=sorted_features,
+                hue=sorted_features,
+                ax=ax,
+                palette="viridis",
+                legend=False,
             )
             ax.set_xlabel("Ważność cechy")
             ax.set_ylabel("Cecha")
@@ -475,7 +490,12 @@ class RandomForestRegressorModel(BaseRegressionModel):
 
             fig, ax = plt.subplots(figsize=(10, max(6, len(sorted_features) * 0.3)))
             sns.barplot(
-                x=sorted_importance, y=sorted_features, ax=ax, palette="viridis"
+                x=sorted_importance,
+                y=sorted_features,
+                hue=sorted_features,
+                ax=ax,
+                palette="viridis",
+                legend=False,
             )
             ax.set_xlabel("Ważność cechy")
             ax.set_ylabel("Cecha")

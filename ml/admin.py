@@ -9,15 +9,31 @@ class ModelParameterDefInline(admin.TabularInline):
 
 @admin.register(MLModel)
 class MLModelAdmin(admin.ModelAdmin):
-    list_display = ("name", "type", "library", "description")
-    list_filter = ("type",)
+    list_display = ("id", "name", "type", "library", "description")
+    list_filter = ("type", "library")
     search_fields = ("name", "description")
     inlines = [ModelParameterDefInline]
 
 
 @admin.register(MLRun)
 class MLRunAdmin(admin.ModelAdmin):
-    list_display = ("run_id", "user", "dataset", "model", "status", "created_at")
+    list_display = (
+        "run_id",
+        "user",
+        "pipeline",
+        "model",
+        "status",
+        "execution_time_ms",
+        "created_at",
+        "model_binary_path"
+    )
     list_filter = ("status", "model", "user")
-    search_fields = ("user__username", "dataset__name", "model__name")
-    readonly_fields = ("created_at", "metrics", "used_parameters", "split_config")
+    search_fields = ("run_id", "user__username", "pipeline__dataset__name", "model__name")
+
+    readonly_fields = (
+        "run_id",
+        "created_at",
+        "metrics",
+        "used_parameters",
+        "plots_paths"
+    )

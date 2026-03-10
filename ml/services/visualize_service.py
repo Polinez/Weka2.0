@@ -1,5 +1,7 @@
 """Service for handling visualization logic."""
 
+from django.conf import settings
+from django.db.models import F
 from ml.models import MLRun
 from data.services import load_dataset_dataframe
 from preprocessing.services import get_train_test_dataframes
@@ -15,10 +17,12 @@ def get_latest_run_visualization_data(user, dataset, pipeline) -> tuple:
     """
     Retrieves the latest MLRun and its plots.
     If plots are missing in the DB but metrics exist, it attempts to regenerate them.
-    Returns: (latest_run, plots_list, error_message)
+    Returns: (latest_run, plots_urls, error_message)
     """
     latest_run = (
-        MLRun.objects.filter(dataset=dataset, user=user).order_by("-created_at").first()
+        MLRun.objects.filter(pipeline__dataset=dataset, user=user)
+        .order_by(F("created_at").desc())
+        .first()
     )
 
     if not latest_run:
@@ -30,11 +34,15 @@ def get_latest_run_visualization_data(user, dataset, pipeline) -> tuple:
     if metrics.get("error"):
         return latest_run, [], f"Błąd modelu: {metrics.get('error')}"
 
-    # 2. Trying to get ready plots from database (Base64)
-    plots = metrics.get("plots_base64", [])
+    plots_urls = []
 
-    # 3. "Emergency" logic - regenerating plots live if they are missing
-    if not plots and metrics:
+    # 2. If plots paths are saved, use them directly
+    if latest_run.plots_paths:
+        for key, path in latest_run.plots_paths.items():
+            plots_urls.append(f"{settings.MEDIA_URL}{path}")
+
+    # 3. Emergency logic: regenerating plots live if they are missing
+    if not plots_urls and metrics:
         try:
             # We need to load data to draw plots
             if pipeline:
@@ -56,7 +64,11 @@ def get_latest_run_visualization_data(user, dataset, pipeline) -> tuple:
                 # Generating plots based on saved metrics and raw data
                 plots = gen(metrics, df, dataset.target_column) or []
 
+                # Transform base64 strings to Data URIs
+                for p in plots:
+                    plots_urls.append(f"data:image/png;base64,{p}")
+
         except Exception as e:
             return latest_run, [], f"Nie udało się odtworzyć wykresów: {e}"
 
-    return latest_run, plots, None
+    return latest_run, plots_urls, None

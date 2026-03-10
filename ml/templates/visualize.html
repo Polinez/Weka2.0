@@ -21,11 +21,13 @@
 
         {% if plots %}
             <div class="row">
-                {% for plot_base64 in plots %}
+                {% for plot_url in plots %}
                     <div class="col-md-6 mb-4">
                         <div class="card shadow-sm h-100">
                             <div class="card-body text-center">
-                                <img src="data:image/png;base64,{{ plot_base64 }}" class="img-fluid rounded" alt="Wykres wizualizacji modelu">
+                                <a href="{{ plot_url }}" target="_blank" title="Kliknij, aby otworzyć w pełnym rozmiarze">
+                                    <img src="{{ plot_url }}" class="img-fluid rounded" alt="Wykres wizualizacji modelu">
+                                </a>
                             </div>
                         </div>
                     </div>

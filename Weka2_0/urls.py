@@ -21,6 +21,9 @@ from register import views as register_views
 from django.shortcuts import redirect
 from data.views import contact, about
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", lambda request: redirect("data:load_data")),
@@ -31,3 +34,7 @@ urlpatterns = [
     path("about/", about, name="about"),
     path("mlstudio/", include("ml.urls")),
 ]
+
+# allow seeing media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,4 +1,5 @@
-from .base import *
+from .base import * # noqa: F403, F401
+from .base import BASE_DIR
 from decouple import config, Csv
 import dj_database_url
 
