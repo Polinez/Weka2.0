@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 from core.enums import ProblemType, ParamDataType
-from data.models import Dataset
 from preprocessing.models import PreprocessingPipeline
 
 
@@ -45,23 +44,17 @@ class MLRun(models.Model):
     """Single ML experiment run."""
 
     run_id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="runs")
+
     pipeline = models.ForeignKey(
-        PreprocessingPipeline,
-        on_delete=models.CASCADE,
-        related_name="runs",
-        null=True,
-        blank=True,
+        PreprocessingPipeline, on_delete=models.CASCADE, related_name="runs"
     )
+
     model = models.ForeignKey(MLModel, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, default="Success")
-    split_config = models.JSONField(default=dict)
+
     used_parameters = models.JSONField(default=dict)
     metrics = models.JSONField(default=dict)
     plots_paths = models.JSONField(default=dict, blank=True)
@@ -73,4 +66,6 @@ class MLRun(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"Run {self.run_id} | {self.user.username} | {self.dataset.name}"
+        return (
+            f"Run {self.run_id} | {self.user.username} | {self.pipeline.dataset.name}"
+        )

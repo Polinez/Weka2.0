@@ -18,7 +18,7 @@ def plot_to_base64(fig):
     """Converts Matplotlib figure to Base64 string for HTML."""
     try:
         buf = io.BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight")
+        fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
         buf.seek(0)
         return base64.b64encode(buf.getvalue()).decode("utf-8")
     except Exception as e:

@@ -67,7 +67,7 @@ def run_model(request):
             return redirect("ml:run_model")
 
     # 5. Preparing data to display (GET)
-    runs = MLRun.objects.filter(dataset=dataset, user=request.user).order_by(
+    runs = MLRun.objects.filter(pipeline__dataset=dataset, user=request.user).order_by(
         "-created_at"
     )
 
@@ -81,7 +81,9 @@ def run_model(request):
     if run_id:
         selected_run = runs.filter(run_id=run_id).first()
         if selected_run:
-            displayed_common = selected_run.split_config or {}
+            displayed_common = (
+                selected_run.pipeline.split_config if selected_run.pipeline else {}
+            )
             displayed_model = selected_run.used_parameters.get("model_parameters", {})
             model_to_display = selected_run.model
 

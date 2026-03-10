@@ -15,14 +15,14 @@ class Command(BaseCommand):
 
     def _seed_preprocessing_types(self):
         types = [
-            ("Imputation", "Uzupełnianie brakujących wartości", "SimpleImputer"),
-            ("Encoding", "Kodowanie zmiennych kategorycznych", "OrdinalEncoder"),
-            ("Scaling", "Skalowanie cech numerycznych", "StandardScaler"),
-            ("DropColumn", "Usuwanie kolumny", "DropColumn"),
+            ("Imputation", "Uzupełnianie brakujących wartości"),
+            ("Encoding", "Kodowanie zmiennych kategorycznych"),
+            ("Scaling", "Skalowanie cech numerycznych"),
+            ("DropColumn", "Usuwanie kolumny"),
         ]
-        for name, desc, code in types:
+        for name, desc in types:
             PreprocessingType.objects.update_or_create(
-                name=name, defaults={"description": desc, "code_reference": code}
+                name=name, defaults={"description": desc}
             )
         self.stdout.write("PreprocessingType seeded.")
 

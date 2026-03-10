@@ -1,5 +1,6 @@
 """ML experiment run service."""
 
+import base64
 import time
 import uuid
 from pathlib import Path
@@ -88,28 +89,34 @@ def run_ml_experiment(
         metrics = _extract_metrics(evaluation)
         plots_base64 = _generate_plots(evaluation, df_train, target_column, model.type)
 
-        # Saving plots inside JSON with metrics
-        metrics["plots_base64"] = plots_base64
-
-        # 5. Saving Binary File
+        # 5. Saving Binary File AND PLOTS
         run_id = uuid.uuid4()
         model_dir = Path(settings.MEDIA_ROOT) / "models" / str(run_id)
         model_dir.mkdir(parents=True, exist_ok=True)
+
+        # Zapis modelu
         model_path = f"models/{run_id}/model.joblib"
         joblib.dump(ml_instance.model, Path(settings.MEDIA_ROOT) / model_path)
 
-        # 6. Creating Database Record (Moved from Views)
+        # Save plot as png files and store relative paths in DB
+        plots_paths_dict = {}
+        for idx, b64_str in enumerate(plots_base64):
+            img_data = base64.b64decode(b64_str)
+            plot_rel_path = f"models/{run_id}/plot_{idx}.png"
+            with open(Path(settings.MEDIA_ROOT) / plot_rel_path, "wb") as f:
+                f.write(img_data)
+            plots_paths_dict[f"plot_{idx}"] = plot_rel_path
+
+        # 6. Creating Database Record
         ml_run = MLRun.objects.create(
             run_id=run_id,
             user=user,
-            dataset=dataset,
             pipeline=pipeline,
             model=model,
             status="Success",
-            split_config=split_config,
-            used_parameters=used_parameters,
+            used_parameters={"model_parameters": model_params},
             metrics=metrics,
-            plots_paths={},
+            plots_paths=plots_paths_dict,
             model_binary_path=model_path,
             execution_time_ms=elapsed_ms,
         )

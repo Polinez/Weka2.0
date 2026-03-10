@@ -177,8 +177,10 @@ def get_target_column_name(dataset: Dataset) -> str | None:
 
 def archive_dataset_and_cleanup(dataset: Dataset) -> None:
     """Soft delete dataset and hard delete heavy related objects."""
-    dataset.pipelines.all().delete()
-    dataset.runs.all().delete()
+
+    for pipeline in dataset.pipelines.all():
+        pipeline.delete()
+
     dataset.is_archived = True
     dataset.save()
 
