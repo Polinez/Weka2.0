@@ -84,6 +84,9 @@ Weka2.0/
 └── requirements.txt      # Python dependencies
 ```
 
+## 📂 Database Structure
+![Database implemented in lockal and production emv](zz-extras/database.png)
+
 ## ⚙️ Installation and Setup
 
 Follow these steps to run the project locally.
@@ -161,3 +164,5 @@ Open your browser and navigate to: `http://127.0.0.1:8000/`
     * **Scaling:** Standardize numerical features.
 4.  **Model Selection (`/ml/models/`):** Choose an algorithm suitable for your problem type and tune its hyperparameters (e.g., `n_estimators` for Random Forest).
 5.  **Train & Evaluate:** Execute the training process. The system will split the data (Train/Test), train the model, and display detailed metrics (Accuracy, MSE, R2) along with interactive visualizations (Confusion Matrix, ROC Curve, etc.).
+
+![Workflow](zz-extras/przeplywdanych.png)
